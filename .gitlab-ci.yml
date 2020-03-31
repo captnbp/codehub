@@ -203,7 +203,7 @@ deploy_prod:
   image: captnbp/gitlab-ci-image:v2.1
   variables:
     URL: code-hub.k8s.doca.ovh
-    NAMESPACE: code-hub-prod hub
+    NAMESPACE: code-hub-prod
   environment:
     name: prod
     url: https://code-hub.k8s.doca.ovh
@@ -224,8 +224,8 @@ deploy_prod:
     - kubectl apply -f namespace.yaml
     - helm upgrade --install ${CI_ENVIRONMENT_SLUG} jupyterhub/jupyterhub --namespace ${NAMESPACE} --version=${JUPYTERHUB_CHART_VERSION} --values config.yaml
     - |
-      kubectl patch deploy -n ${NAMESPACE} --type json --patch '[{"op": "replace", "path": "/spec/template/spec/containers/0/command", "value": ["bash", "-c", "\nmkdir -p ~/hotfix\ncp -r /usr/local/lib/python3.6/dist-packages/kubespawner ~/hotfix\nls -R ~/hotfix\npatch ~/hotfix/kubespawner/spawner.py << EOT\n72c72\n<             key=lambda x: x.last_timestamp,\n---\n>             key=lambda x: x.last_timestamp and x.last_timestamp.timestamp() or 0.,\nEOT\n\nPYTHONPATH=$HOME/hotfix jupyterhub --config /srv/jupyterhub_config.py --upgrade-db\n"]}]'
-    - kubectl delete -n ${NAMESPACE} -l component=hub,release=${CI_ENVIRONMENT_SLUG},app=jupyterhub
+      kubectl patch deploy -n ${NAMESPACE} hub --type json --patch '[{"op": "replace", "path": "/spec/template/spec/containers/0/command", "value": ["bash", "-c", "\nmkdir -p ~/hotfix\ncp -r /usr/local/lib/python3.6/dist-packages/kubespawner ~/hotfix\nls -R ~/hotfix\npatch ~/hotfix/kubespawner/spawner.py << EOT\n72c72\n<             key=lambda x: x.last_timestamp,\n---\n>             key=lambda x: x.last_timestamp and x.last_timestamp.timestamp() or 0.,\nEOT\n\nPYTHONPATH=$HOME/hotfix jupyterhub --config /srv/jupyterhub_config.py --upgrade-db\n"]}]'
+    - kubectl delete -n ${NAMESPACE} pod -l component=hub,release=${CI_ENVIRONMENT_SLUG},app=jupyterhub
   tags:
     - server
   only:
