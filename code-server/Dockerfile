@@ -1,4 +1,4 @@
-FROM    codercom/code-server:3.0.1
+FROM    codercom/code-server:3.0.2
 
 EXPOSE  8080
 COPY    ./install_tools.sh /usr/local/bin/install_tools.sh
