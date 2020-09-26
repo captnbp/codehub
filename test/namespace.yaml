@@ -4,4 +4,4 @@ metadata:
   labels:
     app.gitlab.com/app: ${CI_PROJECT_PATH_SLUG}
     app.gitlab.com/env: ${CI_ENVIRONMENT_SLUG}
-  name: ${NAMESPACE}
+  name: ${KUBE_NAMESPACE}

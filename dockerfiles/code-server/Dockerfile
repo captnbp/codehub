@@ -1,4 +1,11 @@
-FROM    codercom/code-server:3.0.2
+FROM    codercom/code-server:3.5.0
+
+LABEL maintainer="benoit.pourre@doca-consulting.fr"
+LABEL app.kubernetes.io/version="3.5.0"
+LABEL app.kubernetes.io/managed-by="Helm"
+LABEL app.kubernetes.io/part-of="code-server-hub"
+LABEL app.kubernetes.io/component="nginx"
+LABEL source="https://gitlab.com/captnbp/code-server-hub"
 
 EXPOSE  8080
 COPY    ./install_tools.sh /usr/local/bin/install_tools.sh
