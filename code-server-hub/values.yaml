@@ -479,3 +479,27 @@ psp:
 rbac:
   enabled: true
   create: true
+
+## Configure metrics exporter
+##
+metrics:
+  enabled: false
+  service:
+    annotations:
+      prometheus.io/scrape: 'true'
+      prometheus.io/port: '8081'
+  serviceMonitor:
+    enabled: false
+    additionalLabels: {}
+    # namespace: monitoring
+    # interval: 30s
+    # scrapeTimeout: 10s
+  ## Custom PrometheusRule to be defined
+  ## The value is evaluated as a template, so, for example, the value can depend on .Release or .Chart
+  ## ref: https://github.com/coreos/prometheus-operator#customresourcedefinitions
+  ##
+  prometheusRule:
+    enabled: false
+    additionalLabels: {}
+    namespace: ""
+    rules: []
