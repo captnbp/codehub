@@ -252,3 +252,15 @@ Usage:
         {{- tpl (.value | toYaml) .context }}
     {{- end }}
 {{- end -}}
+
+{{/*
+ Create the name of the master service account to use
+ */}}
+{{- define "jupyterhub.singleuser.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ $serviceAccountName := default (include "jupyterhub.fullname" .) .Values.singleuser.serviceAccount }}
+    {{- printf "%s-singleuser" $serviceAccountName }}
+{{- else -}}
+    {{ default "default" .Values.singleuser.serviceAccount }}
+{{- end -}}
+{{- end -}}
