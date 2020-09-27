@@ -26,6 +26,8 @@ data:
 {{- end }}
 {{- /* copy values.singleuser */ -}}
 {{- $_ := set $values "singleuser" .Values.singleuser }}
+{{- $serviceAccountName := include "jupyterhub.singleuser.serviceAccountName" . -}}
+{{- $_ := set $values.singleuser "serviceAccountName" $serviceAccountName }}
 {{- /* passthrough subset of Chart / Release */ -}}
 {{- $_ := set $values "Chart" (dict "Name" .Chart.Name "Version" .Chart.Version) }}
 {{- $_ := set $values "Release" (pick .Release "Name" "Namespace" "Service") }}

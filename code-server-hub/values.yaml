@@ -466,6 +466,7 @@ debug:
 ##
 serviceAccount:
   enabled: true
+  create: true
 
 ## Pod Security Policy
 ## ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/
