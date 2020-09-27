@@ -74,6 +74,8 @@ for trait, cfg_key in (
         cfg_key = camelCaseify(trait)
     set_config_if_not_none(c.JupyterHub, trait, 'hub.' + cfg_key)
 
+c.JupyterHub.authenticate_prometheus = False
+
 c.JupyterHub.ip = '{}-proxy-public'.format(get_config('fullname'))
 c.JupyterHub.port = 80
 
