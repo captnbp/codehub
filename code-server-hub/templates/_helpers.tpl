@@ -239,3 +239,16 @@ limits:
   {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+Renders a value that contains template.
+Usage:
+{{ include "jupyterhub.tplvalues.render" ( dict "value" .Values.path.to.the.Value "context" $) }}
+*/}}
+{{- define "jupyterhub.tplvalues.render" -}}
+    {{- if typeIs "string" .value }}
+        {{- tpl .value .context }}
+    {{- else }}
+        {{- tpl (.value | toYaml) .context }}
+    {{- end }}
+{{- end -}}

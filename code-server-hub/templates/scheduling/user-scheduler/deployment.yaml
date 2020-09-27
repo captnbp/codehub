@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-scheduler
+  name: {{ template "jupyterhub.fullname" . }}-user-scheduler
   labels:
     {{- include "jupyterhub.labels" . | nindent 4 }}
 spec:
@@ -20,22 +20,24 @@ spec:
         checksum/config-map: {{ include (print $.Template.BasePath "/scheduling/user-scheduler/configmap.yaml") . | sha256sum }}
     spec:
       {{- if .Values.rbac.enabled }}
-      serviceAccountName: user-scheduler
+      serviceAccountName: {{ template "jupyterhub.fullname" . }}-user-scheduler
       {{- end }}
       {{- if .Values.scheduling.podPriority.enabled }}
-      priorityClassName: {{ .Release.Name }}-default-priority
+      priorityClassName: {{ template "jupyterhub.fullname" . }}-default-priority
       {{- end }}
       nodeSelector: {{ toJson .Values.scheduling.userScheduler.nodeSelector }}
       {{- include "jupyterhub.coreAffinity" . | nindent 6 }}
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: user-scheduler
           image: {{ include "jupyterhub.scheduler.image" . }}
           command:
             - /usr/local/bin/kube-scheduler
-            - --scheduler-name={{ .Release.Name }}-user-scheduler
-            - --policy-configmap=user-scheduler
+            - --scheduler-name={{ template "jupyterhub.fullname" . }}-user-scheduler
+            - --policy-configmap={{ template "jupyterhub.fullname" . }}-user-scheduler
             - --policy-configmap-namespace={{ .Release.Namespace }}
-            - --lock-object-name=user-scheduler
+            - --lock-object-name={{ template "jupyterhub.fullname" . }}-user-scheduler
             - --lock-object-namespace={{ .Release.Namespace }}
             - --leader-elect-resource-lock=configmaps
             - --v={{ .Values.scheduling.userScheduler.logLevel | default 4 }}
@@ -50,4 +52,12 @@ spec:
               port: 10251
           resources:
             {{- .Values.scheduling.userScheduler.resources | toYaml | trimSuffix "\n" | nindent 12 }}
+          securityContext:
+            runAsUser: {{ .Values.hub.uid }}
+            # Don't allow any process to execute as root inside the container
+            allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
 {{- end }}

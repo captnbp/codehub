@@ -11,6 +11,14 @@ global:
 #     - myRegistryKeySecretName
 #   storageClass: myStorageClass
 
+## String to partially override postgresql.fullname template (will maintain the release name)
+##
+# nameOverride:
+
+## String to fully override postgresql.fullname template
+##
+# fullnameOverride:
+
 custom: {}
 
 hub:
@@ -108,10 +116,6 @@ hub:
     initialDelaySeconds: 0
     periodSeconds: 10
   # existingSecret: existing-secret
-
-rbac:
-  enabled: true
-
 
 proxy:
   secretToken: ''
@@ -267,7 +271,7 @@ singleuser:
       pvcName:
       subPath: '{username}'
     capacity: 20Gi
-    homeMountPath: /home/jovyan
+    homeMountPath: /home/coder
     dynamic:
       storageClass:
       pvcNameTemplate: claim-{username}{servername}
@@ -299,6 +303,10 @@ singleuser:
         cmd:
           - code-server
         image: registry.gitlab.com/captnbp/code-server-hub/code-server:v3.5.0
+        uid: 1000
+        gid: 1000
+        fs_gid: 1000
+        privileged: false
         extra_containers:
           - name: nginx
             image: registry.gitlab.com/captnbp/code-server-hub/nginx:v3.5.0
@@ -309,6 +317,15 @@ singleuser:
               limits:
                 cpu: 100m
                 memory: 100Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 101
+              runAsGroup: 101
+              privileged: false
+              runAsNonRoot: true
+              capabilities:
+                drop:
+                  - ALL
           - name: oauth
             image: registry.gitlab.com/captnbp/code-server-hub/oauth:v3.5.0
             ports:
@@ -322,6 +339,15 @@ singleuser:
               limits:
                 cpu: 100m
                 memory: 100Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 33
+              runAsGroup: 33
+              privileged: false
+              runAsNonRoot: true
+              capabilities:
+                drop:
+                  - ALL
     - description: code-server-anaconda
       default: false
       display_name: VScode + Anaconda
@@ -339,6 +365,15 @@ singleuser:
               limits:
                 cpu: 100m
                 memory: 100Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 101
+              runAsGroup: 101
+              privileged: false
+              runAsNonRoot: true
+              capabilities:
+                drop:
+                  - ALL
           - name: oauth
             image: registry.gitlab.com/captnbp/code-server-hub/oauth:v3.5.0
             ports:
@@ -352,6 +387,15 @@ singleuser:
               limits:
                 cpu: 100m
                 memory: 100Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 33
+              runAsGroup: 33
+              privileged: false
+              runAsNonRoot: true
+              capabilities:
+                drop:
+                  - ALL
 
 scheduling:
   userScheduler:
@@ -415,3 +459,23 @@ cull:
 
 debug:
   enabled: false
+
+
+## Pod Service Account
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+##
+serviceAccount:
+  enabled: true
+
+## Pod Security Policy
+## ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/
+##
+psp:
+  create: true
+
+## Creates role for ServiceAccount
+## Required for PSP
+##
+rbac:
+  enabled: true
+  create: true

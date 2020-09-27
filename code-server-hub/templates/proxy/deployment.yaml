@@ -4,7 +4,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: proxy
+  name: {{ template "jupyterhub.fullname" . }}-proxy
   labels:
     {{- include "jupyterhub.labels" . | nindent 4 }}
 spec:
@@ -34,7 +34,7 @@ spec:
     spec:
       terminationGracePeriodSeconds: 60
       {{- if .Values.scheduling.podPriority.enabled }}
-      priorityClassName: {{ .Release.Name }}-default-priority
+      priorityClassName: {{ template "jupyterhub.fullname" . }}-default-priority
       {{- end }}
       nodeSelector: {{ toJson .Values.proxy.nodeSelector }}
       {{- include "jupyterhub.coreAffinity" . | nindent 6 }}
@@ -43,13 +43,21 @@ spec:
       volumes:
         - name: tls-secret
           secret:
-            secretName: proxy-manual-tls
+            secretName: {{ template "jupyterhub.fullname" . }}-proxy-manual-tls
       {{- else if or $manualHTTPSwithsecret $manualHTTPSwithCertificate }}
       volumes:
         - name: tls-secret
           secret:
             secretName: {{ .Values.proxy.https.secret.name }}
       {{- end }}
+      {{- if .Values.rbac.enabled }}
+      serviceAccountName: {{ template "jupyterhub.fullname" . }}-proxy
+      {{- end }}
+      securityContext:
+        fsGroup: 65534
+        runAsUser: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
       containers:
         - name: chp
           image: {{ .Values.proxy.chp.image.name }}:{{ .Values.proxy.chp.image.tag }}
@@ -58,8 +66,8 @@ spec:
             - --ip=0.0.0.0
             - --api-ip=0.0.0.0
             - --api-port=8001
-            - --default-target=http://$(HUB_SERVICE_HOST):$(HUB_SERVICE_PORT)
-            - --error-target=http://$(HUB_SERVICE_HOST):$(HUB_SERVICE_PORT)/hub/error
+            - --default-target=http://{{ template "jupyterhub.fullname" . }}-hub:8081
+            - --error-target=http://{{ template "jupyterhub.fullname" . }}-hub:8081/hub/error
             {{- if $manualHTTPS }}
             - --port=8443
             - --redirect-port=8000
@@ -89,6 +97,10 @@ spec:
           securityContext:
             # Don't allow any process to execute as root inside the container
             allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: CONFIGPROXY_AUTH_TOKEN
               valueFrom:
@@ -96,7 +108,7 @@ spec:
                   {{- if .Values.hub.existingSecret }}
                   name: {{ .Values.hub.existingSecret }}
                   {{- else }}
-                  name: hub-secret
+                  name: {{ template "jupyterhub.fullname" . }}-hub-secret
                   {{- end }}
                   key: proxy.token
           {{- with .Values.proxy.chp.image.pullPolicy }}
