@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hub
+  name: {{ template "jupyterhub.fullname" . }}-hub
   labels:
     {{- include "jupyterhub.labels" . | nindent 4 }}
 spec:
@@ -31,20 +31,20 @@ spec:
         {{- end }}
     spec:
       {{- if .Values.scheduling.podPriority.enabled }}
-      priorityClassName: {{ .Release.Name }}-default-priority
+      priorityClassName: {{ template "jupyterhub.fullname" . }}-default-priority
       {{- end }}
       nodeSelector: {{ toJson .Values.hub.nodeSelector }}
       {{- include "jupyterhub.coreAffinity" . | nindent 6 }}
       volumes:
         - name: config
           configMap:
-            name: hub-config
+            name: {{ template "jupyterhub.fullname" . }}-hub-config
         - name: secret
           secret:
             {{- if .Values.hub.existingSecret }}
             secretName: {{ .Values.hub.existingSecret }}
             {{- else }}
-            secretName: hub-secret
+            secretName: {{ template "jupyterhub.fullname" . }}-hub-secret
             {{- end }}
         {{- if .Values.hub.extraVolumes }}
         {{- .Values.hub.extraVolumes | toYaml | trimSuffix "\n" | nindent 8 }}
@@ -52,13 +52,16 @@ spec:
         {{- if eq .Values.hub.db.type "sqlite-pvc" }}
         - name: hub-db-dir
           persistentVolumeClaim:
-            claimName: hub-db-dir
+            claimName: {{ template "jupyterhub.fullname" . }}-hub-db-dir
         {{- end }}
       {{- if .Values.rbac.enabled }}
-      serviceAccountName: hub
+      serviceAccountName: {{ template "jupyterhub.fullname" . }}-hub
       {{- end }}
       securityContext:
         fsGroup: {{ .Values.hub.fsGid }}
+        runAsUser: {{ .Values.hub.uid }}
+        runAsGroup: {{ .Values.hub.fsGid }}
+        runAsNonRoot: true
 {{- include "jupyterhub.imagePullSecrets" . | indent 6 }}
       {{- if .Values.hub.initContainers }}
       initContainers:
@@ -130,11 +133,15 @@ spec:
             runAsUser: {{ .Values.hub.uid }}
             # Don't allow any process to execute as root inside the container
             allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: PYTHONUNBUFFERED
               value: "1"
             - name: HELM_RELEASE_NAME
-              value: {{ .Release.Name | quote }}
+              value: {{ template "jupyterhub.fullname" . }}
             {{- if .Values.hub.cookieSecret }}
             - name: JPY_COOKIE_SECRET
               valueFrom:
@@ -142,7 +149,7 @@ spec:
                   {{- if .Values.hub.existingSecret }}
                   name: {{ .Values.hub.existingSecret }}
                   {{- else }}
-                  name: hub-secret
+                  name: {{ template "jupyterhub.fullname" . }}-hub-secret
                   {{- end }}
                   key: hub.cookie-secret
             {{- end }}
@@ -156,7 +163,7 @@ spec:
                   {{- if .Values.hub.existingSecret }}
                   name: {{ .Values.hub.existingSecret }}
                   {{- else }}
-                  name: hub-secret
+                  name: {{ template "jupyterhub.fullname" . }}-hub-secret
                   {{- end }}
                   key: proxy.token
             {{- if .Values.auth.state.enabled }}
@@ -166,7 +173,7 @@ spec:
                   {{- if .Values.hub.existingSecret }}
                   name: {{ .Values.hub.existingSecret }}
                   {{- else }}
-                  name: hub-secret
+                  name: {{ template "jupyterhub.fullname" . }}-hub-secret
                   {{- end }}
                   key: auth.state.crypto-key
             {{- end }}
@@ -178,7 +185,7 @@ spec:
                   {{- if .Values.hub.existingSecret }}
                   name: {{ .Values.hub.existingSecret }}
                   {{- else }}
-                  name: hub-secret
+                  name: {{ template "jupyterhub.fullname" . }}-hub-secret
                   {{- end }}
                   key: hub.db.password
             {{- else if eq .Values.hub.db.type "postgres" }}
@@ -188,7 +195,7 @@ spec:
                   {{- if .Values.hub.existingSecret }}
                   name: {{ .Values.hub.existingSecret }}
                   {{- else }}
-                  name: hub-secret
+                  name: {{ template "jupyterhub.fullname" . }}-hub-secret
                   {{- end }}
                   key: hub.db.password
             {{- end }}

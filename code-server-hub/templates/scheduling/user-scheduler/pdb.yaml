@@ -2,7 +2,7 @@
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
-  name: user-scheduler
+  name: {{ template "jupyterhub.fullname" . }}-user-scheduler
   labels:
     {{- include "jupyterhub.labels" . | nindent 4 }}
 spec:

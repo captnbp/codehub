@@ -1,7 +1,7 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: hub-config
+  name: {{ template "jupyterhub.fullname" . }}-hub-config
   labels:
     {{- include "jupyterhub.labels" . | nindent 4 }}
 data:
@@ -30,6 +30,7 @@ data:
 {{- $_ := set $values "Chart" (dict "Name" .Chart.Name "Version" .Chart.Version) }}
 {{- $_ := set $values "Release" (pick .Release "Name" "Namespace" "Service") }}
   values.yaml: |
+    fullname: {{ template "jupyterhub.fullname" . }}
     {{- $values | toYaml | nindent 4 }}
 
   {{- /* Glob files to allow them to be mounted by the hub pod */ -}}
