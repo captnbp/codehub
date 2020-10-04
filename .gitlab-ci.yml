@@ -9,6 +9,7 @@ variables:
   SECURE_ANALYZERS_PREFIX: "registry.gitlab.com/gitlab-org/security-products/analyzers"
   CS_MAJOR_VERSION: 2
   CONTAINER_SCANNING_DISABLED: "False"
+  SCAN_KUBERNETES_MANIFESTS: "true"
 
 stages:
   - test
@@ -18,6 +19,21 @@ stages:
 
 include:
   - template: Jobs/Code-Quality.gitlab-ci.yml  # https://gitlab.com/gitlab-org/gitlab-foss/blob/master/lib/gitlab/ci/templates/Jobs/Code-Quality.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+
+sast:
+  variables:
+    SAST_DEFAULT_ANALYZERS: kubesec
+    KUBESEC_HELM_CHARTS_PATH: code-server-hub
+    KUBESEC_HELM_OPTIONS: "--set proxy.secretToken=1065c7d75ebf9c0a43395bc121c398472c4c770babeaa1be4236e9d57cd43915"
+  stage: test
+  tags:
+    - server
+
+code_quality:
+  stage: test
+  tags:
+    - server
 
 docker-build-code-server:
   stage: build
@@ -359,11 +375,6 @@ hadolint-browser:
   image: hadolint/hadolint
   script:
     - hadolint dockerfiles/browser/Dockerfile
-  tags:
-    - server
-
-code_quality:
-  stage: test
   tags:
     - server
 
