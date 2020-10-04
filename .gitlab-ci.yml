@@ -11,9 +11,10 @@ variables:
   CONTAINER_SCANNING_DISABLED: "False"
 
 stages:
-  - build
   - test
-  #- deploy
+  - build
+  - security
+  - release
 
 include:
   - template: Jobs/Code-Quality.gitlab-ci.yml  # https://gitlab.com/gitlab-org/gitlab-foss/blob/master/lib/gitlab/ci/templates/Jobs/Code-Quality.gitlab-ci.yml
@@ -37,7 +38,9 @@ docker-build-code-server:
   tags:
     - server
   rules:
-    - if: '$CI_COMMIT_TAG || $CI_COMMIT_BRANCH'
+    - if: $CI_COMMIT_TAG
+    - changes:
+      - dockerfiles/code-server
 
 docker-build-code-server-anaconda:
   stage: build
@@ -58,7 +61,9 @@ docker-build-code-server-anaconda:
   tags:
     - server
   rules:
-    - if: '$CI_COMMIT_TAG || $CI_COMMIT_BRANCH'
+    - if: $CI_COMMIT_TAG
+    - changes:
+      - dockerfiles/code-server-anaconda
 
 docker-build-nginx:
   stage: build
@@ -79,7 +84,9 @@ docker-build-nginx:
   tags:
     - server
   rules:
-    - if: '$CI_COMMIT_TAG || $CI_COMMIT_BRANCH'
+    - if: $CI_COMMIT_TAG
+    - changes:
+      - dockerfiles/nginx
 
 docker-build-oauth:
   stage: build
@@ -100,15 +107,35 @@ docker-build-oauth:
   tags:
     - server
   rules:
-    - if: '$CI_COMMIT_TAG || $CI_COMMIT_BRANCH'
+    - if: $CI_COMMIT_TAG
+    - changes:
+      - dockerfiles/oauth
 
-# code_quality:
-#   stage: test
-#   tags:
-#     - server
+docker-build-browser:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - |
+      if [[ -z "$CI_COMMIT_TAG" ]]; then
+        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-browser
+        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
+      else
+        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/browser
+        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
+      fi
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR/dockerfiles/browser --dockerfile Dockerfile --destination $CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG
+  tags:
+    - server
+  rules:
+    - if: $CI_COMMIT_TAG
+    - changes:
+      - dockerfiles/browser
 
 container_scanning_nginx:
-  stage: test
+  stage: security
   image: $SECURE_ANALYZERS_PREFIX/klar:$CS_MAJOR_VERSION
   variables:
     # By default, use the latest clair vulnerabilities database, however, allow it to be overridden here with a specific image
@@ -139,11 +166,12 @@ container_scanning_nginx:
   tags:
     - server
   rules:
-    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
-      when: always
+    - if: $CI_COMMIT_TAG
+    - changes:
+      - dockerfiles/nginx
 
 container_scanning_oauth:
-  stage: test
+  stage: security
   image: $SECURE_ANALYZERS_PREFIX/klar:$CS_MAJOR_VERSION
   variables:
     # By default, use the latest clair vulnerabilities database, however, allow it to be overridden here with a specific image
@@ -174,11 +202,48 @@ container_scanning_oauth:
   tags:
     - server
   rules:
-    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
-      when: always
+    - if: $CI_COMMIT_TAG
+    - changes:
+      - dockerfiles/oauth
+
+container_scanning_browser:
+  stage: security
+  image: $SECURE_ANALYZERS_PREFIX/klar:$CS_MAJOR_VERSION
+  variables:
+    # By default, use the latest clair vulnerabilities database, however, allow it to be overridden here with a specific image
+    # to enable container scanning to run offline, or to provide a consistent list of vulnerabilities for integration testing purposes
+    CLAIR_DB_IMAGE_TAG: "latest"
+    CLAIR_DB_IMAGE: "$SECURE_ANALYZERS_PREFIX/clair-vulnerabilities-db:$CLAIR_DB_IMAGE_TAG"
+    # Override the GIT_STRATEGY variable in your `.gitlab-ci.yml` file and set it to `fetch` if you want to provide a `clair-whitelist.yml`
+    # file. See https://docs.gitlab.com/ee/user/application_security/container_scanning/index.html#overriding-the-container-scanning-template
+    # for details
+    GIT_STRATEGY: none
+  allow_failure: true
+  services:
+    - name: $CLAIR_DB_IMAGE
+      alias: clair-vulnerabilities-db
+  script:
+    - |
+      if [[ -z "$CI_COMMIT_TAG" ]]; then
+        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-browser
+        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
+      else
+        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/browser
+        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
+      fi
+    - /analyzer run
+  artifacts:
+    reports:
+      container_scanning: gl-container-scanning-report.json
+  tags:
+    - server
+  rules:
+    - if: $CI_COMMIT_TAG
+    - changes:
+      - dockerfiles/browser
 
 container_scanning_code_server:
-  stage: test
+  stage: security
   image: $SECURE_ANALYZERS_PREFIX/klar:$CS_MAJOR_VERSION
   variables:
     # By default, use the latest clair vulnerabilities database, however, allow it to be overridden here with a specific image
@@ -209,11 +274,12 @@ container_scanning_code_server:
   tags:
     - server
   rules:
-    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
-      when: always
+    - if: $CI_COMMIT_TAG
+    - changes:
+      - dockerfiles/code-server
 
 container_scanning_code_server_anaconda:
-  stage: test
+  stage: security
   image: $SECURE_ANALYZERS_PREFIX/klar:$CS_MAJOR_VERSION
   variables:
     # By default, use the latest clair vulnerabilities database, however, allow it to be overridden here with a specific image
@@ -244,12 +310,88 @@ container_scanning_code_server_anaconda:
   tags:
     - server
   rules:
-    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
-      when: always
+    - if: $CI_COMMIT_TAG
+    - changes:
+      - dockerfiles/code-server-anaconda
+
+helm_lint:
+  stage: test
+  image: captnbp/gitlab-ci-image:v2.9.1
+  script:
+    - helm lint code-server-hub --set proxy.secretToken=`openssl rand -hex 32`
+  tags:
+    - server
+
+hadolint-code-server:
+  stage: test
+  image: hadolint/hadolint
+  script:
+    - hadolint dockerfiles/code-server/Dockerfile
+  tags:
+    - server
+
+hadolint-code-server-anaconda:
+  stage: test
+  image: hadolint/hadolint
+  script:
+    - hadolint dockerfiles/code-server-anaconda/Dockerfile
+  tags:
+    - server
+
+hadolint-oauth:
+  stage: test
+  image: hadolint/hadolint
+  script:
+    - hadolint dockerfiles/oauth/Dockerfile
+  tags:
+    - server
+
+hadolint-nginx:
+  stage: test
+  image: hadolint/hadolint
+  script:
+    - hadolint dockerfiles/nginx/Dockerfile
+  tags:
+    - server
+
+hadolint-browser:
+  stage: test
+  image: hadolint/hadolint
+  script:
+    - hadolint dockerfiles/browser/Dockerfile
+  tags:
+    - server
+
+code_quality:
+  stage: test
+  tags:
+    - server
+
+helm_package:
+  stage: release
+  image: captnbp/gitlab-ci-image:v2.9.1
+  script:
+    - |
+      if [[ -z "$CI_COMMIT_TAG" ]]; then
+        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
+      else
+        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
+      fi
+    - helm package code-server-hub --app-version ${CI_APPLICATION_TAG}
+    - export CHART=$(ls code-server-hub-*.tgz)
+    - curl -u ${BASIC_AUTH_USER}:${BASIC_AUTH_PASS} --data-binary "@${CHART}" https://charts.doca.cloud/api/charts
+  artifacts:
+    paths:
+      - code-server-hub-*.tgz
+    expire_in: 30 days
+  tags:
+    - server
+  rules:
+    - if: $CI_COMMIT_TAG
 
 # deploy_review:
 #   stage: deploy
-#   image: captnbp/gitlab-ci-image:v2.8
+#   image: captnbp/gitlab-ci-image:v2.9.1
 #   variables:
 #     URL: ${CI_ENVIRONMENT_SLUG}.server.doca.ovh
 #     NAMESPACE: ${KUBE_NAMESPACE}
@@ -280,7 +422,7 @@ container_scanning_code_server_anaconda:
 
 # stop_review:
 #   stage: deploy
-#   image: captnbp/gitlab-ci-image:v2.8
+#   image: captnbp/gitlab-ci-image:v2.9.1
 #   variables:
 #     NAMESPACE: ${KUBE_NAMESPACE}
 #   environment:
@@ -299,7 +441,7 @@ container_scanning_code_server_anaconda:
 
 # deploy_prod:
 #   stage: deploy
-#   image: captnbp/gitlab-ci-image:v2.8
+#   image: captnbp/gitlab-ci-image:v2.9.1
 #   variables:
 #     URL: code-hub.server.doca.ovh
 #     NAMESPACE: code-hub-prod

@@ -73,6 +73,8 @@ hub:
                           container["env"] = [ {'name': k, 'value': v} for k, v in (self.get_env() or {}).items()]
                       if "name" in container and container["name"] == "nginx":
                           container["env"] = [ {'name': k, 'value': v} for k, v in (self.get_env() or {}).items()]
+                      if "name" in container and container["name"] == "browser":
+                          container["env"] = [ {'name': k, 'value': v} for k, v in (self.get_env() or {}).items()]
               return super(KubeSpawner, self).get_pod_manifest()
       c.JupyterHub.spawner_class = KubeSpawner
   extraEnv: {}
@@ -265,7 +267,10 @@ singleuser:
   storage:
     type: dynamic
     extraLabels: {}
-    extraVolumes: []
+    extraVolumes:
+      - name: shm-volume
+        emptyDir:
+          medium: Memory
     extraVolumeMounts: []
     static:
       pvcName:
@@ -348,6 +353,33 @@ singleuser:
               capabilities:
                 drop:
                   - ALL
+          - name: browser
+            image: registry.gitlab.com/captnbp/code-server-hub/browser:v3.5.0
+            ports:
+              - containerPort: 6080
+                name: browser
+                protocol: TCP
+            resources:
+              requests:
+                cpu: 100m
+                memory: 200Mi
+              limits:
+                cpu: 2
+                memory: 2Gi
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 1000
+              runAsGroup: 1000
+              privileged: false
+              runAsNonRoot: true
+              capabilities:
+                drop:
+                  - ALL
+            volumeMounts:
+              - name: volume-{username}
+                mountPath: /home/coder
+              - name: shm-volume
+                mountPath: /dev/shm
     - description: code-server-anaconda
       default: false
       display_name: VScode + Anaconda
