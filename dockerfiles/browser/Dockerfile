@@ -21,7 +21,6 @@ RUN ln -s /usr/share/novnc/vnc.html /usr/share/novnc/index.html
 ENV TERM=xterm
 ENV VNC_COL_DEPTH=24
 ENV VNC_RESOLUTION=1800x920
-ENV JUPYTERHUB_API_TOKEN=some-password
 
 # Add new user
 RUN addgroup coder && adduser -G coder -s /bin/sh -D coder
