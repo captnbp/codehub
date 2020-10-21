@@ -23,5 +23,5 @@ RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-2020.07-Linux-x86_6
 USER    coder
 ENV     ZSH_CACHE_DIR=/tmp
 
-ENTRYPOINT      ["dumb-init", "fixuid", "-q", "docker-entrypoint.sh"]
+ENTRYPOINT      ["dumb-init", "docker-entrypoint.sh"]
 CMD     ["code-server"]
