@@ -38,7 +38,6 @@ c.JupyterHub.tornado_settings = {
 
 def camelCaseify(s):
     """convert snake_case to camelCase
-
     For the common case where some_value is set from someValue
     so we don't have to specify the name twice.
     """
@@ -53,15 +52,13 @@ elif db_type == "sqlite-memory":
     c.JupyterHub.db_url = "sqlite://"
 else:
     set_config_if_not_none(c.JupyterHub, "db_url", "hub.db.url")
-    
 
+# c.JupyterHub configuration from Helm chart's configmap
 for trait, cfg_key in (
-    # Max number of servers that can be spawning at any one time
     ('concurrent_spawn_limit', None),
-    # Max number of servers to be running at one time
     ('active_server_limit', None),
-    # base url prefix
     ('base_url', None),
+    # ('cookie_secret', None),  # requires a Hex -> Byte transformation
     ('allow_named_servers', None),
     ('named_server_limit_per_user', None),
     ('authenticate_prometheus', None),
@@ -74,13 +71,22 @@ for trait, cfg_key in (
         cfg_key = camelCaseify(trait)
     set_config_if_not_none(c.JupyterHub, trait, 'hub.' + cfg_key)
 
+# a required Hex -> Byte transformation
+cookie_secret_hex = get_config("hub.cookieSecret")
+if cookie_secret_hex:
+    c.JupyterHub.cookie_secret = a2b_hex(cookie_secret_hex)
+
+# hub_bind_url configures what the JupyterHub process within the hub pod's
+# container should listen to.
+hub_container_port = 8081
+c.JupyterHub.hub_bind_url = f'http://:{hub_container_port}'
+
+# hub_connect_url is the URL for connecting to the hub for use by external
+# JupyterHub services such as the proxy. Note that *_SERVICE_* environment
+# variables are set by Kubernetes for Services.
+c.JupyterHub.hub_connect_url = 'http://{}-hub:8081'.format(get_config('fullname'))
+
 c.JupyterHub.authenticate_prometheus = False
-
-c.JupyterHub.ip = '{}-proxy-public'.format(get_config('fullname'))
-c.JupyterHub.port = 80
-
-# the hub should listen on all interfaces, so the proxy can access it
-c.JupyterHub.hub_ip = '0.0.0.0'
 
 # implement common labels
 # this duplicates the jupyterhub.commonLabels helper
@@ -153,8 +159,22 @@ if image:
 
     c.KubeSpawner.image = image
 
-if get_config('singleuser.imagePullSecret'):
-    c.KubeSpawner.image_pull_secrets = get_config('singleuser.imagePullSecret')
+if get_config('singleuser.pod_name_template'):
+    c.KubeSpawner.pod_name_template = get_config('singleuser.pod_name_template')
+
+# Combine imagePullSecret.create (single), imagePullSecrets (list), and
+# singleuser.image.pullSecrets (list).
+image_pull_secrets = []
+if get_config("imagePullSecret.automaticReferenceInjection") and (
+    get_config("imagePullSecret.create") or get_config("imagePullSecret.enabled")
+):
+    image_pull_secrets.append('image-pull-secret')
+if get_config('imagePullSecrets'):
+    image_pull_secrets.extend(get_config('imagePullSecrets'))
+if get_config('singleuser.image.pullSecrets'):
+    image_pull_secrets.extend(get_config('singleuser.image.pullSecrets'))
+if image_pull_secrets:
+    c.KubeSpawner.image_pull_secrets = image_pull_secrets
 
 # scheduling:
 if get_config('scheduling.userScheduler.enabled'):
@@ -378,7 +398,8 @@ c.JupyterHub.services = []
 if get_config('cull.enabled', False):
     cull_cmd = [
         'python3',
-        '/etc/jupyterhub/cull_idle_servers.py',
+        '-m',
+        'jupyterhub_idle_culler'
     ]
     base_url = c.JupyterHub.get('base_url', '/')
     cull_cmd.append(
