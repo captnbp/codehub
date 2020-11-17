@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 cd /tmp
 DEBIAN_FRONTEND=noninteractive
 CURL_OPTS=""
@@ -20,7 +21,7 @@ chmod +x /usr/local/bin/kubectl
 
 echo "Install helm"
 latest_release_url="https://github.com/helm/helm/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/helm/helm/releases/tag/v3.' | grep -v beta | grep -v no-underline | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
+TAG=$(curl -Ls $latest_release_url | grep 'href="/helm/helm/releases/tag/v3.' | grep -v beta | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
 curl ${CURL_OPTS} -L "https://get.helm.sh/helm-$TAG-linux-amd64.tar.gz" \
     -o /tmp/helm.tar.gz >/dev/null
 tar zxf /tmp/helm.tar.gz -C /tmp/ >/dev/null
@@ -31,7 +32,7 @@ rm -Rf /tmp/linux-amd64/
 
 echo "Install Packer"
 latest_release_url="https://github.com/hashicorp/packer/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/packer/releases/tag/v.' | grep -v beta | grep -v no-underline | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/packer/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
 curl ${CURL_OPTS} -L "https://releases.hashicorp.com/packer/${TAG}/packer_${TAG}_linux_amd64.zip" \
     -o /tmp/packer.zip >/dev/null
 unzip /tmp/packer.zip -d /tmp/ >/dev/null
@@ -41,7 +42,7 @@ packer -autocomplete-install
 
 echo "Install Terraform"
 latest_release_url="https://github.com/hashicorp/terraform/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/terraform/releases/tag/v.' | grep -v beta | grep -v no-underline | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/terraform/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
 curl ${CURL_OPTS} -L "https://releases.hashicorp.com/terraform/${TAG}/terraform_${TAG}_linux_amd64.zip" \
     -o /tmp/terraform.zip >/dev/null
 unzip /tmp/terraform.zip -d /tmp/ >/dev/null
@@ -52,7 +53,7 @@ terraform -install-autocomplete
 
 echo "Install Vault"
 latest_release_url="https://github.com/hashicorp/vault/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/vault/releases/tag/v.' | grep -v beta | grep -v no-underline | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/vault/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
 curl ${CURL_OPTS} -L "https://releases.hashicorp.com/vault/${TAG}/vault_${TAG}_linux_amd64.zip" \
     -o /tmp/vault.zip >/dev/null
 unzip /tmp/vault.zip -d /tmp/ >/dev/null
@@ -63,7 +64,7 @@ vault -autocomplete-install
 
 echo "Install k9s"
 latest_release_url="https://github.com/derailed/k9s/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/derailed/k9s/releases/tag/v' | grep -v beta | grep -v no-underline  | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
+TAG=$(curl -Ls $latest_release_url | grep 'href="/derailed/k9s/releases/tag/v' | grep -v beta  | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
 curl ${CURL_OPTS} -L "https://github.com/derailed/k9s/releases/download/${TAG}/k9s_Linux_x86_64.tar.gz" \
     -o /tmp/k9s.tar.gz >/dev/null
 tar zxf /tmp/k9s.tar.gz -C /tmp/ >/dev/null
@@ -78,7 +79,7 @@ chmod 755 /usr/local/bin/mc
 
 echo "Install Hadolint"
 latest_release_url="https://github.com/hadolint/hadolint/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/hadolint/hadolint/releases/tag/v.' | grep -v beta | grep -v no-underline | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
+TAG=$(curl -Ls $latest_release_url | grep 'href="/hadolint/hadolint/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
 curl ${CURL_OPTS} -L "https://github.com/hadolint/hadolint/releases/download/${TAG}/hadolint-Linux-x86_64" \
     -o /usr/local/bin/hadolint >/dev/null
 chmod 755 /usr/local/bin/hadolint
