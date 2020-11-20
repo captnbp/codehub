@@ -1,7 +1,7 @@
-FROM    codercom/code-server:3.7.1
+FROM    codercom/code-server:3.7.2
 
 LABEL maintainer="benoit.pourre@doca-consulting.fr"
-LABEL app.kubernetes.io/version="3.7.1"
+LABEL app.kubernetes.io/version="3.7.2"
 LABEL app.kubernetes.io/managed-by="Helm"
 LABEL app.kubernetes.io/part-of="code-server-hub-anaconda"
 LABEL app.kubernetes.io/component="nginx"
