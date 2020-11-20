@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y ca-certificates
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install --no-install-recommends -y python3-dev python3 python3-pip uwsgi uwsgi-plugin-python3 && rm -rf /var/lib/apt/lists/*
 # hadolint ignore=DL3013
-RUN pip3 install --no-cache jupyterhub flask
+RUN pip3 install --no-cache --no-cache-dir  jupyterhub flask
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
