@@ -26,8 +26,11 @@ spec:
       http:
         paths:
           - path: /
+            pathType: Prefix
             backend:
-              serviceName: {{ include "jupyterhub.fullname" $ }}-proxy-public
-              servicePort: https
+              service:
+                name: {{ include "jupyterhub.fullname" $ }}-proxy-public
+                port:
+                  name: https
     {{- end }}
   {{- end }}

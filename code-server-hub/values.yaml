@@ -82,7 +82,7 @@ hub:
   extraVolumeMounts: []
   image:
     name: jupyterhub/k8s-hub
-    tag: '0.10.2'
+    tag: '0.10.6'
   resources:
     requests:
       cpu: 200m
@@ -310,7 +310,8 @@ singleuser:
         uid: 1000
         gid: 1000
         fs_gid: 1000
-        privileged: false
+        run_privileged: false
+        allow_privilege_escalation: false
         extra_containers:
           - name: nginx
             image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.5
@@ -386,6 +387,7 @@ singleuser:
         cmd:
           - code-server
         image: registry.gitlab.com/captnbp/code-server-hub/code-server-anaconda:1.4.5
+        allow_privilege_escalation: false
         extra_containers:
           - name: nginx
             image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.5
