@@ -106,7 +106,7 @@ echo "complete -o nospace -C /usr/local/bin/terraform terraform" >> /etc/zsh/zsh
 echo "complete -o nospace -C /usr/local/bin/vault vault" >> /etc/zsh/zshrc
 
 echo "Install Ansible and ansible-modules-hashivault"
-apt-get install -y --no-install-recommends python3-pip python3-setuptools python3-ldap python3-docker twine
+apt-get install -y --no-install-recommends python3-pip python3-setuptools python3-ldap python3-docker twine python3-psycopg2 postgresql-client
 pip3 install --no-cache-dir ansible ansible-modules-hashivault openshift passlib hvac elasticsearch virtualenv twine
 
 echo "Cleaning"
