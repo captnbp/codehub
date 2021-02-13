@@ -1,7 +1,7 @@
 FROM    nginxinc/nginx-unprivileged:1.18-alpine
 
 LABEL maintainer="benoit.pourre@doca-consulting.fr"
-LABEL app.kubernetes.io/version="3.8.0"
+LABEL app.kubernetes.io/version="3.9.0"
 LABEL app.kubernetes.io/managed-by="Helm"
 LABEL app.kubernetes.io/part-of="code-server-hub"
 LABEL app.kubernetes.io/component="nginx"

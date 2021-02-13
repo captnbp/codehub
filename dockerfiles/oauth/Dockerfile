@@ -1,7 +1,7 @@
 FROM    ubuntu:20.04
 
 LABEL maintainer="benoit.pourre@doca-consulting.fr"
-LABEL app.kubernetes.io/version="3.8.0"
+LABEL app.kubernetes.io/version="3.9.0"
 LABEL app.kubernetes.io/managed-by="Helm"
 LABEL app.kubernetes.io/part-of="code-server-hub"
 LABEL app.kubernetes.io/component="jupyterhub-nginx-oauth"
@@ -13,6 +13,8 @@ LABEL github-project="https://github.com/NYU-CI/jupyterhub-nginx-oauth"
 RUN apt-get update && apt-get install --no-install-recommends -y ca-certificates curl dumb-init && rm -rf /var/lib/apt/lists/*
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install --no-install-recommends -y python3-dev python3 python3-pip uwsgi uwsgi-plugin-python3 && rm -rf /var/lib/apt/lists/*
+# hadolint ignore=DL3013
+RUN pip3 install --no-cache-dir --upgrade pip
 # hadolint ignore=DL3013
 RUN pip3 install --no-cache --no-cache-dir  jupyterhub flask
 
