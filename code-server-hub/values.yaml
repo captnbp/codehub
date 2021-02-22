@@ -651,7 +651,7 @@ metrics:
       prometheus.io/scrape: 'true'
       prometheus.io/port: '8081'
   serviceMonitor:
-    enabled: treu
+    enabled: true
     additionalLabels: {}
     # namespace: monitoring
     # interval: 30s
