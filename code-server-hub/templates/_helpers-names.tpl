@@ -71,16 +71,7 @@ Create chart name and version as used by the chart label.
 
 {{- /* hub Secret */}}
 {{- define "jupyterhub.hub-secret.fullname" -}}
-    {{- /* A hack to avoid issues from invoking this from a parent Helm chart. */}}
-    {{- $existing_secret := .Values.hub.existingSecret }}
-    {{- if ne .Chart.Name "jupyterhub" }}
-        {{- $existing_secret = .Values.jupyterhub.hub.existingSecret }}
-    {{- end }}
-    {{- if $existing_secret }}
-        {{- $existing_secret }}
-    {{- else }}
         {{- include "jupyterhub.hub.fullname" . }}
-    {{- end }}
 {{- end }}
 
 {{- /* hub PVC */}}
