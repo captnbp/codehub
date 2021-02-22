@@ -12,19 +12,15 @@ ingress:
         - code-server-hub.domain.tld
       secretName: code-server-hub-tls
 proxy:
-  secretToken: "b861e9d16e05ec88a51eb1c6f96de2e6c37821c4bdcae4cd5c1c60b8abcf5f48"
   service:
     type: ClusterIP
   https:
     enabled: true
-    type: cert-manager
+    type: secret
     secret:
       name: code-server-hub-tls
       key: tls.key
       crt: tls.crt
-
-auth:
-  type: dummy
 
 hub:
   db:

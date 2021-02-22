@@ -4,23 +4,32 @@ metadata:
   name: {{ template "jupyterhub.fullname" . }}-hub
   labels:
     {{- include "jupyterhub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: hub
   annotations:
+    {{- if not (index .Values.hub.service.annotations "prometheus.io/scrape") }}
+    prometheus.io/scrape: "true"
+    {{- end }}
+    {{- if not (index .Values.hub.service.annotations "prometheus.io/path") }}
+    prometheus.io/path: {{ .Values.hub.baseUrl | trimSuffix "/" }}/hub/metrics
+    {{- end }}
+    {{- if not (index .Values.hub.service.annotations "prometheus.io/port") }}
+    prometheus.io/port: "8081"
+    {{- end }}
     {{- if .Values.hub.service.annotations }}
     {{- .Values.hub.service.annotations | toYaml | nindent 4 }}
     {{- end }}
     {{- toYaml .Values.metrics.service.annotations | nindent 4 }}
 spec:
   type: {{ .Values.hub.service.type }}
-  {{- if .Values.hub.service.loadBalancerIP }}
-  loadBalancerIP: {{ .Values.hub.service.loadBalancerIP }}
+  {{- with .Values.hub.service.loadBalancerIP }}
+  loadBalancerIP: {{ . }}
   {{- end }}
   selector:
     {{- include "jupyterhub.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: hub
   ports:
-    - name: http
-      protocol: TCP
-      port: 8081
-      targetPort: 8081
-      {{- if .Values.hub.service.ports.nodePort }}
-      nodePort: {{ .Values.hub.service.ports.nodePort }}
+    - port: 8081
+      targetPort: http
+      {{- with .Values.hub.service.ports.nodePort }}
+      nodePort: {{ . }}
       {{- end }}

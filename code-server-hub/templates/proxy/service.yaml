@@ -10,13 +10,15 @@ metadata:
   labels:
     {{- $_ := merge (dict "componentSuffix" "-api") . }}
     {{- include "jupyterhub.labels" $_ | nindent 4 }}
+    app.kubernetes.io/component: proxy
 spec:
   selector:
     {{- include "jupyterhub.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
   ports:
     - protocol: TCP
       port: 8001
-      targetPort: 8001
+      targetPort: api
 ---
 apiVersion: v1
 kind: Service
@@ -25,6 +27,7 @@ metadata:
   labels:
     {{- $_ := merge (dict "componentSuffix" "-public") . }}
     {{- include "jupyterhub.labels" $_ | nindent 4 }}
+    app.kubernetes.io/component: proxy
     {{- if .Values.proxy.service.labels }}
     {{- .Values.proxy.service.labels | toYaml | trimSuffix "\n" | nindent 4 }}
     {{- end }}
@@ -35,35 +38,39 @@ metadata:
 spec:
   selector:
     {{- include "jupyterhub.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
   ports:
     {{- if $HTTPS }}
     - name: https
       port: 443
-      protocol: TCP
-      {{- if or $manualHTTPS $manualHTTPSwithsecret $manualHTTPSwithCertificate }}
-      targetPort: 8443
-      {{- else if $offloadHTTPS }}
-      targetPort: 8000
+      # When HTTPS termination is handled outside our helm chart, pass traffic
+      # coming in via this Service's port 443 to targeted pod's port meant for
+      # HTTP traffic.
+      {{- if $offloadHTTPS }}
+      targetPort: http
       {{- else }}
-      targetPort: 443
+      targetPort: https
       {{- end }}
-      {{- if .Values.proxy.service.nodePorts.https }}
-      nodePort: {{ .Values.proxy.service.nodePorts.https }}
+      {{- with .Values.proxy.service.nodePorts.https }}
+      nodePort: {{ . }}
       {{- end }}
     {{- end }}
     - name: http
       port: 80
-      protocol: TCP
-      targetPort: 8000
-      # allow proxy.service.nodePort for http
-      {{- if .Values.proxy.service.nodePorts.http }}
-      nodePort: {{ .Values.proxy.service.nodePorts.http }}
+      targetPort: http
+      {{- with .Values.proxy.service.nodePorts.http }}
+      nodePort: {{ . }}
       {{- end }}
+    {{- with .Values.proxy.service.extraPorts }}
+    {{- . | toYaml | trimSuffix "\n" | nindent 4 }}
+    {{- end }}
   type: {{ .Values.proxy.service.type }}
-  {{- if .Values.proxy.service.loadBalancerIP }}
-  loadBalancerIP: {{ .Values.proxy.service.loadBalancerIP }}
+  {{- with .Values.proxy.service.loadBalancerIP }}
+  loadBalancerIP: {{ . }}
   {{- end }}
-  {{- if and (eq .Values.proxy.service.type "LoadBalancer") .Values.proxy.service.loadBalancerSourceRanges }}
+  {{- if eq .Values.proxy.service.type "LoadBalancer" }}
+  {{- with .Values.proxy.service.loadBalancerSourceRanges }}
   loadBalancerSourceRanges:
-    {{- .Values.proxy.service.loadBalancerSourceRanges | toYaml | trimSuffix "\n" | nindent 4 }}
+    {{- . | toYaml | trimSuffix "\n" | nindent 4 }}
+  {{- end }}
   {{- end }}

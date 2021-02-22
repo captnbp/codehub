@@ -1,28 +1,35 @@
-## Global Docker image parameters
-## Please, note that this will override the image parameters, including dependencies, configured to use the global value
-## Current available global Docker image parameters: imageRegistry and imagePullSecrets
-##
-global:
-  jupyterhub: {}
-#   imageRegistry: myRegistryName
-#   imagePullSecrets:
-#     - myRegistryKeySecretName
-#   storageClass: myStorageClass
+# fullnameOverride and nameOverride distinguishes blank strings, null values,
+# and non-blank strings. For more details, see the configuration reference.
+fullnameOverride: ""
+nameOverride:
 
-# imagePullSecrets:
-#   - myRegistryKeySecretName
-
-## String to partially override postgresql.fullname template (will maintain the release name)
-##
-# nameOverride:
-
-## String to fully override postgresql.fullname template
-##
-# fullnameOverride:
-
+# custom can contain anything you want to pass to the hub pod, as all passed
+# Helm template values will be made available there.
 custom: {}
 
+# imagePullSecret is configuration to create a k8s Secret that Helm chart's pods
+# can get credentials from to pull their images.
+imagePullSecret:
+  create: false
+  automaticReferenceInjection: true
+  registry:
+  username:
+  password:
+  email:
+# imagePullSecrets is configuration to reference the k8s Secret resources the
+# Helm chart's pods can get credentials from to pull their images.
+imagePullSecrets: []
+
+# hub relates to the hub pod, responsible for running JupyterHub, its configured
+# Authenticator class KubeSpawner, and its configured Proxy class
+# ConfigurableHTTPProxy. KubeSpawner creates the user pods, and
+# ConfigurableHTTPProxy speaks with the actual ConfigurableHTTPProxy server in
+# the proxy pod.
 hub:
+  config:
+    JupyterHub:
+      admin_access: true
+      authenticator_class: dummy
   service:
     type: ClusterIP
     annotations: {}
@@ -31,11 +38,11 @@ hub:
     loadBalancerIP:
   baseUrl: /
   cookieSecret:
-  publicURL:
   initContainers: []
   uid: 1000
   fsGid: 1000
   nodeSelector: {}
+  tolerations: []
   concurrentSpawnLimit: 64
   consecutiveFailureLimit: 5
   activeServerLimit:
@@ -62,6 +69,8 @@ hub:
     password:
   labels: {}
   annotations: {}
+  command: []
+  args: []
   extraConfig:
     codeserverhub: |
       from kubespawner.spawner import KubeSpawner as KSO
@@ -76,31 +85,49 @@ hub:
                           container["env"] = [ {'name': k, 'value': v} for k, v in (self.get_env() or {}).items()]
               return super(KubeSpawner, self).get_pod_manifest()
       c.JupyterHub.spawner_class = KubeSpawner
+  extraConfigMap: {}
+  extraFiles: {}
   extraEnv: {}
   extraContainers: []
   extraVolumes: []
   extraVolumeMounts: []
   image:
     name: jupyterhub/k8s-hub
-    tag: '0.10.6'
+    tag: "0.11.1"
+    pullPolicy:
+    pullSecrets: []
   resources:
     requests:
       cpu: 200m
       memory: 512Mi
-    limits:
-      cpu: 200m
-      memory: 512Mi
+  containerSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    allowPrivilegeEscalation: false
+    privileged: false
+    capabilities:
+      drop:
+        - ALL
   services: {}
   pdb:
-    enabled: true
+    enabled: false
+    maxUnavailable:
     minAvailable: 1
   networkPolicy:
     enabled: false
     ingress: []
+    ## egress for JupyterHub already includes Kubernetes internal DNS and
+    ## access to the proxy, but can be restricted further, but ensure to allow
+    ## access to the Kubernetes API server that couldn't be pinned ahead of
+    ## time.
+    ##
+    ## ref: https://stackoverflow.com/a/59016417/2220152
     egress:
       - to:
           - ipBlock:
               cidr: 0.0.0.0/0
+    interNamespaceAccessLabels: ignore
+    allowedIngressPorts: []
   allowNamedServers: false
   namedServerLimitPerUser:
   authenticatePrometheus:
@@ -109,17 +136,33 @@ hub:
   templatePaths: []
   templateVars: {}
   livenessProbe:
-    enabled: false
-    initialDelaySeconds: 30
+    # The livenessProbe's aim to give JupyterHub sufficient time to startup but
+    # be able to restart if it becomes unresponsive for ~5 min.
+    enabled: true
+    initialDelaySeconds: 300
     periodSeconds: 10
+    failureThreshold: 30
+    timeoutSeconds: 3
   readinessProbe:
+    # The readinessProbe's aim is to provide a successful startup indication,
+    # but following that never become unready before its livenessProbe fail and
+    # restarts it if needed. To become unready following startup serves no
+    # purpose as there are no other pod to fallback to in our non-HA deployment.
     enabled: true
     initialDelaySeconds: 0
-    periodSeconds: 10
-  # existingSecret: existing-secret
+    periodSeconds: 2
+    failureThreshold: 1000
+    timeoutSeconds: 1
+  existingSecret:
 
+rbac:
+  enabled: true
+
+# proxy relates to the proxy pod, the proxy-public service, and the autohttps
+# pod and proxy-http service.
 proxy:
-  secretToken: ''
+  secretToken:
+  annotations: {}
   deploymentStrategy:
     ## type: Recreate
     ## - JupyterHub's interaction with the CHP proxy becomes a lot more robust
@@ -146,84 +189,93 @@ proxy:
     ##     Error: Deployment.apps "proxy" is invalid: spec.strategy.rollingUpdate: Forbidden: may not be specified when strategy `type` is 'Recreate'
     ##     Error: UPGRADE FAILED: Deployment.apps "proxy" is invalid: spec.strategy.rollingUpdate: Forbidden: may not be specified when strategy `type` is 'Recreate'
     rollingUpdate:
+  # service relates to the proxy-public service
   service:
-    type: LoadBalancer
+    type: ClusterIP
     labels: {}
     annotations: {}
     nodePorts:
       http:
       https:
+    extraPorts: []
     loadBalancerIP:
     loadBalancerSourceRanges: []
+  # chp relates to the proxy pod, which is responsible for routing traffic based
+  # on dynamic configuration sent from JupyterHub to CHP's REST API.
   chp:
+    containerSecurityContext:
+      runAsUser: 65534 # nobody user
+      runAsGroup: 65534 # nobody group
+      allowPrivilegeEscalation: false
     image:
       name: jupyterhub/configurable-http-proxy
-      tag: 4.2.2
+      tag: 4.2.3
+      pullPolicy:
+      pullSecrets: []
+    extraCommandLineFlags: []
     livenessProbe:
       enabled: true
-      initialDelaySeconds: 30
+      initialDelaySeconds: 60
       periodSeconds: 10
     readinessProbe:
       enabled: true
       initialDelaySeconds: 0
-      periodSeconds: 10
+      periodSeconds: 2
+      failureThreshold: 1000
     resources:
       requests:
         cpu: 200m
         memory: 512Mi
-      limits:
-        cpu: 200m
-        memory: 512Mi
+    extraEnv: {}
+    nodeSelector: {}
+    tolerations: []
+    networkPolicy:
+      enabled: true
+      ingress: []
+      egress:
+        - to:
+            - ipBlock:
+                cidr: 0.0.0.0/0
+      interNamespaceAccessLabels: ignore
+      allowedIngressPorts: [http, https]
+    pdb:
+      enabled: false
+      maxUnavailable:
+      minAvailable: 1
+
   secretSync:
+    containerSecurityContext:
+      runAsUser: 65534 # nobody user
+      runAsGroup: 65534 # nobody group
+      allowPrivilegeEscalation: false
     image:
       name: jupyterhub/k8s-secret-sync
-      tag: '0.10.2'
+      tag: "0.11.1"
+      pullPolicy:
+      pullSecrets: []
     resources: {}
   labels: {}
-  nodeSelector: {}
-  pdb:
-    enabled: true
-    minAvailable: 1
   https:
     enabled: true
     type: secret
-    #type:  manual, offload, secret, cert-manager
+    #type: letsencrypt, manual, offload, secret, cert-manager
+    letsencrypt:
+      contactEmail:
+      # Specify custom server here (https://acme-staging-v02.api.letsencrypt.org/directory) to hit staging LE
+      acmeServer: https://acme-v02.api.letsencrypt.org/directory
     manual:
       key:
       cert:
     secret:
-      name: ''
+      name: chart-example-tls
       key: tls.key
       crt: tls.crt
-    kubernetesDNSDomain: cluster.local
     hosts: []
-  networkPolicy:
-    enabled: false
-    ingress: []
-    egress:
-      - to:
-          - ipBlock:
-              cidr: 0.0.0.0/0
 
-auth:
-  type: dummy
-  whitelist:
-    users:
-  admin:
-    access: true
-    users:
-  dummy:
-    password:
-  ldap:
-    dn:
-      search: {}
-      user: {}
-    user: {}
-  state:
-    enabled: false
-    cryptoKey:
-
+# singleuser relates to the configuration of KubeSpawner which runs in the hub
+# pod, and its spawning of user pods such as jupyter-myusername.
 singleuser:
+  podNameTemplate:
   extraTolerations: []
   nodeSelector: {}
   extraNodeAffinity:
@@ -238,24 +290,36 @@ singleuser:
   networkTools:
     image:
       name: jupyterhub/k8s-network-tools
-      tag: '0.10.2'
+      tag: "0.11.1"
+      pullPolicy:
+      pullSecrets: []
   cloudMetadata:
-    enabled: false
+    # block set to true will append a privileged initContainer using the
+    # iptables to block the sensitive metadata server at the provided ip.
+    blockWithIptables: false
     ip: 169.254.169.254
   networkPolicy:
     enabled: false
     ingress: []
     egress:
-    # Required egress is handled by other rules so it's safe to modify this
+      # Required egress to communicate with the hub and DNS servers will be
+      # augmented to these egress rules.
+      #
+      # This default rule explicitly allows all outbound traffic from singleuser
+      # pods, except to a typical IP used to return metadata that can be used by
+      # someone with malicious intent.
       - to:
           - ipBlock:
               cidr: 0.0.0.0/0
               except:
                 - 169.254.169.254/32
+    interNamespaceAccessLabels: ignore
+    allowedIngressPorts: []
   events: true
   extraAnnotations: {}
   extraLabels:
-    hub.jupyter.org/network-access-hub: 'true'
+    hub.jupyter.org/network-access-hub: "true"
+  extraFiles: {}
   extraEnv: {}
   lifecycleHooks: {}
   initContainers: []
@@ -283,9 +347,9 @@ singleuser:
       storageAccessModes: [ReadWriteOnce]
   image:
     name: registry.gitlab.com/captnbp/code-server-hub/code-server
-    tag: 1.4.12
-    pullPolicy: IfNotPresent
-    # imagePullSecret: secretName
+    tag: 1.4.13
+    pullPolicy:
+    pullSecrets: []
   startTimeout: 300
   cpu:
     limit:
@@ -306,7 +370,7 @@ singleuser:
       kubespawner_override:
         cmd:
           - code-server
-        image: registry.gitlab.com/captnbp/code-server-hub/code-server:1.4.12
+        image: registry.gitlab.com/captnbp/code-server-hub/code-server:1.4.13
         uid: 1000
         gid: 1000
         fs_gid: 1000
@@ -314,7 +378,7 @@ singleuser:
         allow_privilege_escalation: false
         extra_containers:
           - name: nginx
-            image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.12
+            image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.13
             resources:
               requests:
                 cpu: 100m
@@ -332,7 +396,7 @@ singleuser:
                 drop:
                   - ALL
           - name: oauth
-            image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.4.12
+            image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.4.13
             ports:
               - containerPort: 9095
                 name: oauth
@@ -354,7 +418,7 @@ singleuser:
                 drop:
                   - ALL
           - name: browser
-            image: registry.gitlab.com/captnbp/code-server-hub/browser:1.4.12
+            image: registry.gitlab.com/captnbp/code-server-hub/browser:1.4.13
             ports:
               - containerPort: 6080
                 name: browser
@@ -386,11 +450,11 @@ singleuser:
       kubespawner_override:
         cmd:
           - code-server
-        image: registry.gitlab.com/captnbp/code-server-hub/code-server-anaconda:1.4.12
+        image: registry.gitlab.com/captnbp/code-server-hub/code-server-anaconda:1.4.13
         allow_privilege_escalation: false
         extra_containers:
           - name: nginx
-            image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.12
+            image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.13
             resources:
               requests:
                 cpu: 100m
@@ -408,7 +472,7 @@ singleuser:
                 drop:
                   - ALL
           - name: oauth
-            image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.4.12
+            image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.4.13
             ports:
               - containerPort: 9095
                 name: oauth
@@ -430,27 +494,56 @@ singleuser:
                 drop:
                   - ALL
 
+# scheduling relates to the user-scheduler pods and user-placeholder pods.
 scheduling:
   userScheduler:
     enabled: false
     replicas: 2
     logLevel: 4
-    ## policy:
-    ## Allows you to provide custom YAML/JSON to render into a JSON policy.cfg,
-    ## a configuration file for the kube-scheduler binary.
-    ## NOTE: The kube-scheduler binary in the kube-scheduler image we are
-    ## currently using may be version bumped. It would for example happen if we
-    ## increase the lowest supported k8s version for the helm chart. At this
-    ## point, the provided policy.cfg may require a change along with that due
-    ## to breaking changes in the kube-scheduler binary.
-    policy: {}
+    # plugins ref: https://kubernetes.io/docs/reference/scheduling/config/#scheduling-plugins-1
+    plugins:
+      score:
+        disabled:
+          - name: SelectorSpread
+          - name: TaintToleration
+          - name: PodTopologySpread
+          - name: NodeResourcesBalancedAllocation
+          - name: NodeResourcesLeastAllocated
+          # Disable plugins to be allowed to enable them again with a different
+          # weight and avoid an error.
+          - name: NodePreferAvoidPods
+          - name: NodeAffinity
+          - name: InterPodAffinity
+          - name: ImageLocality
+        enabled:
+          - name: NodePreferAvoidPods
+            weight: 161051
+          - name: NodeAffinity
+            weight: 14631
+          - name: InterPodAffinity
+            weight: 1331
+          - name: NodeResourcesMostAllocated
+            weight: 121
+          - name: ImageLocality
+            weight: 11
+    containerSecurityContext:
+      runAsUser: 65534 # nobody user
+      runAsGroup: 65534 # nobody group
+      allowPrivilegeEscalation: false
     image:
-      name: gcr.io/google_containers/kube-scheduler-amd64
-      tag: v1.13.12
+      # IMPORTANT: Bumping the minor version of this binary should go hand in
+      #            hand with an inspection of the user-scheduelrs RBAC resources
+      #            that we have forked.
+      name: k8s.gcr.io/kube-scheduler
+      tag: v1.19.7
+      pullPolicy:
+      pullSecrets: []
     nodeSelector: {}
+    tolerations: []
     pdb:
       enabled: true
-      minAvailable: 1
+      maxUnavailable: 1
+      minAvailable:
     resources:
       requests:
         cpu: 50m
@@ -460,6 +553,14 @@ scheduling:
     globalDefault: false
     defaultPriority: 0
     userPlaceholderPriority: -10
+  userPlaceholder:
+    enabled: true
+    replicas: 0
+    containerSecurityContext:
+      runAsUser: 65534
+      runAsGroup: 65534
+      allowPrivilegeEscalation: false
+    resources: {}
   corePods:
     nodeAffinity:
       matchNodePurpose: prefer
@@ -467,8 +568,55 @@ scheduling:
     nodeAffinity:
       matchNodePurpose: prefer
 
+# prePuller relates to the hook|continuous-image-puller DaemonsSets
+prePuller:
+  annotations: {}
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+  containerSecurityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
+    allowPrivilegeEscalation: false
+  extraTolerations: []
+  # hook relates to the hook-image-awaiter Job and hook-image-puller DaemonSet
+  hook:
+    enabled: true
+    # image and the configuration below relates to the hook-image-awaiter Job
+    image:
+      name: jupyterhub/k8s-image-awaiter
+      tag: "set-by-chartpress"
+      pullPolicy:
+      pullSecrets: []
+    containerSecurityContext:
+      runAsUser: 65534 # nobody user
+      runAsGroup: 65534 # nobody group
+      allowPrivilegeEscalation: false
+    podSchedulingWaitDuration: 10
+    nodeSelector: {}
+    tolerations: []
+    resources:
+      requests:
+        cpu: 0
+        memory: 0
+  continuous:
+    enabled: true
+  pullProfileListImages: true
+  extraImages: {}
+  pause:
+    containerSecurityContext:
+      runAsUser: 65534 # nobody user
+      runAsGroup: 65534 # nobody group
+      allowPrivilegeEscalation: false
+    image:
+      name: k8s.gcr.io/pause
+      tag: "3.2" # https://console.cloud.google.com/gcr/images/google-containers/GLOBAL/pause?gcrImageListsize=30
+      pullPolicy:
+      pullSecrets: []
+
 ingress:
-  enabled: false
+  enabled: true
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -481,7 +629,7 @@ ingress:
         - chart-example.local
 
 cull:
-  enabled: false
+  enabled: true
   users: false
   removeNamedServers: false
   timeout: 3600
@@ -489,41 +637,21 @@ cull:
   concurrency: 10
   maxAge: 0
 
-
 debug:
   enabled: false
 
-
-## Pod Service Account
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-##
-serviceAccount:
-  enabled: true
-  create: true
-
-## Pod Security Policy
-## ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/
-##
-psp:
-  create: true
-
-## Creates role for ServiceAccount
-## Required for PSP
-##
-rbac:
-  enabled: true
-  create: true
-
+global:
+  safeToShowValues: false
 ## Configure metrics exporter
 ##
 metrics:
-  enabled: false
+  enabled: true
   service:
     annotations:
       prometheus.io/scrape: 'true'
       prometheus.io/port: '8081'
   serviceMonitor:
-    enabled: false
+    enabled: treu
     additionalLabels: {}
     # namespace: monitoring
     # interval: 30s

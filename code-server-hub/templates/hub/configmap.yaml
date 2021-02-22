@@ -4,37 +4,21 @@ metadata:
   name: {{ template "jupyterhub.fullname" . }}-hub-config
   labels:
     {{- include "jupyterhub.labels" . | nindent 4 }}
-data:
-{{- $values := pick .Values "auth" "cull" "custom" "debug" "hub" "scheduling" "singleuser" }}
-{{- /* trim secret values. Update here if new secrets are added! */ -}}
-{{- /* make a copy of values.auth to avoid modifying the original */ -}}
-{{- $_ := set $values "auth" (merge dict .Values.auth) }}
-{{- $_ := set $values.auth "state" (omit $values.auth.state "cryptoKey") }}
-{{- range $key, $auth := .Values.auth }}
-  {{- if typeIs "map[string]interface {}" $auth }}
-    {{- if (or $auth.clientSecret $auth.password) }}
-      {{- $_ := set $values.auth $key (omit $auth "clientSecret" "password") }}
-    {{- end }}
-  {{- end }}
-{{- end }}
-{{- $_ := set $values "hub" (omit $values.hub "cookieSecret" "extraEnv" ) -}}
-{{- $_ := set $values.hub "services" dict }}
-{{- range $key, $service := .Values.hub.services }}
-  {{- if $service.apiToken }}
-    {{- $_ := set $values.hub.services $key (omit $service "apiToken") }}
-  {{- end }}
-{{- end }}
-{{- /* copy values.singleuser */ -}}
-{{- $_ := set $values "singleuser" .Values.singleuser }}
-{{- $serviceAccountName := include "jupyterhub.singleuser.serviceAccountName" . -}}
-{{- $_ := set $values.singleuser "serviceAccountName" $serviceAccountName }}
-{{- /* passthrough subset of Chart / Release */ -}}
-{{- $_ := set $values "Chart" (dict "Name" .Chart.Name "Version" .Chart.Version) }}
-{{- $_ := set $values "Release" (pick .Release "Name" "Namespace" "Service") }}
-  values.yaml: |
-    fullname: {{ template "jupyterhub.fullname" . }}
-    {{- $values | toYaml | nindent 4 }}
+data:data:
+  {{- /*
+    Resource names exposed to reliably reference them.
 
-  {{- /* Glob files to allow them to be mounted by the hub pod */ -}}
-  {{- /* key=filename: value=content */ -}}
+    user-scheduler: "my-helm-release-user-scheduler"
+    ...
+  */}}
+  {{- include "jupyterhub.name-templates" . | nindent 2 }}
+
+  {{- /*
+    Glob files to allow them to be mounted by the hub pod
+
+    jupyterhub_config: |
+      multi line string content...
+    z2jh.py: |
+      multi line string content...
+  */}}
   {{- (.Files.Glob "files/hub/*").AsConfig | nindent 2 }}

@@ -1,6 +1,6 @@
 {{- $manualHTTPS := and .Values.proxy.https.enabled (eq .Values.proxy.https.type "cert-manager") -}}
 {{- if $manualHTTPS -}}
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: {{ template "jupyterhub.fullname" . }}-proxy
@@ -9,8 +9,8 @@ metadata:
 spec:
   secretName: {{ template "jupyterhub.fullname" . }}-proxy-manual-tls
   dnsNames:
-  - proxy-public.{{ .Release.Namespace }}.svc.{{ .Values.kubernetesDNSDomain }}
-  - proxy-api.{{ .Release.Namespace }}.svc.{{ .Values.kubernetesDNSDomain }}
+  - {{ template "jupyterhub.fullname" . }}-proxy-public.{{ .Release.Namespace }}.svc.{{ .Values.kubernetesDNSDomain }}
+  - {{ template "jupyterhub.fullname" . }}-proxy-api.{{ .Release.Namespace }}.svc.{{ .Values.kubernetesDNSDomain }}
   issuerRef:
     name: vault-issuer
     # We can reference ClusterIssuers by changing the kind here.

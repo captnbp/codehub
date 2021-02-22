@@ -4,11 +4,13 @@ metadata:
   name: {{ template "jupyterhub.fullname" . }}-hub
   labels:
     {{- include "jupyterhub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: hub
 spec:
   replicas: 1
   selector:
     matchLabels:
       {{- include "jupyterhub.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: hub
   strategy:
     {{- .Values.hub.deploymentStrategy | toYaml | trimSuffix "\n" | nindent 4 }}
   template:
@@ -16,6 +18,7 @@ spec:
       labels:
         {{- /* Changes here will cause the Deployment to restart the pods. */}}
         {{- include "jupyterhub.matchLabels" . | nindent 8 }}
+        app.kubernetes.io/component: hub
         hub.jupyter.org/network-access-proxy-api: "true"
         hub.jupyter.org/network-access-proxy-http: "true"
         hub.jupyter.org/network-access-singleuser: "true"
@@ -34,6 +37,18 @@ spec:
       priorityClassName: {{ template "jupyterhub.fullname" . }}-default-priority
       {{- end }}
       nodeSelector: {{ toJson .Values.hub.nodeSelector }}
+      tolerations:
+        - key: hub.jupyter.org/dedicated
+          operator: Equal
+          value: core
+          effect: NoSchedule
+        - key: hub.jupyter.org_dedicated
+          operator: Equal
+          value: core
+          effect: NoSchedule
+        {{- with .Values.hub.tolerations }}
+        {{- . | toYaml | trimSuffix "\n" | nindent 8 }}
+        {{- end }}
       {{- include "jupyterhub.coreAffinity" . | nindent 6 }}
       volumes:
         - name: config
@@ -41,18 +56,27 @@ spec:
             name: {{ template "jupyterhub.fullname" . }}-hub-config
         - name: secret
           secret:
-            {{- if .Values.hub.existingSecret }}
-            secretName: {{ .Values.hub.existingSecret }}
-            {{- else }}
             secretName: {{ template "jupyterhub.fullname" . }}-hub-secret
-            {{- end }}
-        {{- if .Values.hub.extraVolumes }}
-        {{- .Values.hub.extraVolumes | toYaml | trimSuffix "\n" | nindent 8 }}
+        {{- if .Values.hub.extraFiles }}
+        - name: files
+          secret:
+            secretName: {{ template "jupyterhub.fullname" . }}-hub-secret
+            items:
+              {{- range $file_key, $file_details := .Values.hub.extraFiles }}
+              - key: {{ $file_key | quote }}
+                path: {{ $file_key | quote }}
+                {{- with $file_details.mode }}
+                mode: {{ . }}
+                {{- end }}
+              {{- end }}
+        {{- end }}
+        {{- with .Values.hub.extraVolumes }}
+        {{- . | toYaml | trimSuffix "\n" | nindent 8 }}
         {{- end }}
         {{- if eq .Values.hub.db.type "sqlite-pvc" }}
-        - name: hub-db-dir
+        - name: pvc
           persistentVolumeClaim:
-            claimName: {{ template "jupyterhub.fullname" . }}-hub-db-dir
+            claimName: {{ include "jupyterhub.hub-pvc.fullname" . }}
         {{- end }}
       {{- if .Values.rbac.enabled }}
       serviceAccountName: {{ template "jupyterhub.fullname" . }}-hub
@@ -62,21 +86,37 @@ spec:
         runAsUser: {{ .Values.hub.uid }}
         runAsGroup: {{ .Values.hub.fsGid }}
         runAsNonRoot: true
-{{- include "jupyterhub.imagePullSecrets" . | indent 6 }}
-      {{- if .Values.hub.initContainers }}
+      {{- with include "jupyterhub.imagePullSecrets" (dict "root" . "image" .Values.hub.image) }}
+      imagePullSecrets: {{ . }}
+      {{- end }}
+      {{- with .Values.hub.initContainers }}
       initContainers:
-        {{- .Values.hub.initContainers | toYaml | trimSuffix "\n" | nindent 8 }}
+        {{- . | toYaml | trimSuffix "\n" | nindent 8 }}
       {{- end }}
       containers:
-        {{- if .Values.hub.extraContainers }}
-        {{- .Values.hub.extraContainers | toYaml | trimSuffix "\n" | nindent 8 }}
+        {{- with .Values.hub.extraContainers }}
+        {{- . | toYaml | trimSuffix "\n" | nindent 8 }}
         {{- end }}
         - name: hub
           image: {{ .Values.hub.image.name }}:{{ .Values.hub.image.tag }}
+          {{- with .Values.hub.command }}
           command:
+            {{- range . }}
+            - {{ tpl . $ }}
+            {{- end }}
+          {{- end }}
+          args:
+            {{- /* .Values.hub.args overrides everything the Helm chart otherside would set */}}
+            {{- if .Values.hub.args }}
+            {{- range .Values.hub.args }}
+            - {{ tpl . $ }}
+            {{- end }}
+
+            {{- /* .Values.hub.args didn't replace the default logic */}}
+            {{- else }}
             - jupyterhub
             - --config
-            - /etc/jupyterhub/jupyterhub_config.py
+            - /usr/local/etc/jupyterhub/jupyterhub_config.py
             {{- if .Values.debug.enabled }}
             - --debug
             {{- end }}
@@ -100,59 +140,55 @@ spec:
             - --upgrade-db
             {{- end }}
             {{- end }}
+            {{- end }}
           volumeMounts:
-            - mountPath: /etc/jupyterhub/jupyterhub_config.py
+            - mountPath: /usr/local/etc/jupyterhub/jupyterhub_config.py
               subPath: jupyterhub_config.py
               name: config
-            - mountPath: /etc/jupyterhub/z2jh.py
+            - mountPath: /usr/local/etc/jupyterhub/z2jh.py
               subPath: z2jh.py
               name: config
-            - mountPath: /etc/jupyterhub/cull_idle_servers.py
-              subPath: cull_idle_servers.py
+            - mountPath: /usr/local/etc/jupyterhub/config/
               name: config
-            - mountPath: /etc/jupyterhub/config/
-              name: config
-            - mountPath: /etc/jupyterhub/secret/
+            - mountPath: /usr/local/etc/jupyterhub/secret/
               name: secret
-            {{- if .Values.hub.extraVolumeMounts }}
-            {{- .Values.hub.extraVolumeMounts | toYaml | trimSuffix "\n" | nindent 12 }}
+            {{- range $file_key, $file_details := .Values.hub.extraFiles }}
+            - mountPath: {{ $file_details.mountPath }}
+              subPath: {{ $file_key | quote }}
+              name: files
+            {{- end }}
+            {{- with .Values.hub.extraVolumeMounts }}
+            {{- . | toYaml | trimSuffix "\n" | nindent 12 }}
             {{- end }}
             {{- if eq .Values.hub.db.type "sqlite-pvc" }}
             - mountPath: /srv/jupyterhub
-              name: hub-db-dir
-              {{- if .Values.hub.db.pvc.subPath }}
-              subPath: {{ .Values.hub.db.pvc.subPath | quote }}
+              name: pvc
+              {{- with .Values.hub.db.pvc.subPath }}
+              subPath: {{ . | quote }}
               {{- end }}
             {{- end }}
+          {{- with .Values.hub.resources }}
           resources:
-            {{- .Values.hub.resources | toYaml | trimSuffix "\n" | nindent 12 }}
+            {{- . | toYaml | trimSuffix "\n" | nindent 12 }}
+          {{- end }}
           {{- with .Values.hub.image.pullPolicy }}
           imagePullPolicy: {{ . }}
           {{- end }}
+          {{- /* Below is deprecation logic of .Values.hub.uid */}}
+          {{- if .Values.hub.containerSecurityContext }}
+          {{- $securityContext := dict }}
+          {{- if hasKey .Values.hub "uid" }}
+          {{- $_ := merge $securityContext (dict "runAsUser" .Values.hub.uid) }}
+          {{- end }}
+          {{- $_ := merge $securityContext .Values.hub.containerSecurityContext }}
           securityContext:
-            runAsUser: {{ .Values.hub.uid }}
-            # Don't allow any process to execute as root inside the container
-            allowPrivilegeEscalation: false
-            privileged: false
-            capabilities:
-              drop:
-                - ALL
+            {{- $securityContext | toYaml | trimSuffix "\n" | nindent 12 }}
+          {{- end }}
           env:
             - name: PYTHONUNBUFFERED
               value: "1"
             - name: HELM_RELEASE_NAME
               value: {{ template "jupyterhub.fullname" . }}
-            {{- if .Values.hub.cookieSecret }}
-            - name: JPY_COOKIE_SECRET
-              valueFrom:
-                secretKeyRef:
-                  {{- if .Values.hub.existingSecret }}
-                  name: {{ .Values.hub.existingSecret }}
-                  {{- else }}
-                  name: {{ template "jupyterhub.fullname" . }}-hub-secret
-                  {{- end }}
-                  key: hub.cookie-secret
-            {{- end }}
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
@@ -160,62 +196,27 @@ spec:
             - name: CONFIGPROXY_AUTH_TOKEN
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.hub.existingSecret }}
-                  name: {{ .Values.hub.existingSecret }}
-                  {{- else }}
                   name: {{ template "jupyterhub.fullname" . }}-hub-secret
-                  {{- end }}
-                  key: proxy.token
-            {{- if .Values.auth.state.enabled }}
-            - name: JUPYTERHUB_CRYPT_KEY
-              valueFrom:
-                secretKeyRef:
-                  {{- if .Values.hub.existingSecret }}
-                  name: {{ .Values.hub.existingSecret }}
-                  {{- else }}
-                  name: {{ template "jupyterhub.fullname" . }}-hub-secret
-                  {{- end }}
-                  key: auth.state.crypto-key
-            {{- end }}
+                  key: JupyterHub.proxy_auth_token
             {{- if .Values.hub.db.password }}
             {{- if eq .Values.hub.db.type "mysql" }}
             - name: MYSQL_PWD
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.hub.existingSecret }}
-                  name: {{ .Values.hub.existingSecret }}
-                  {{- else }}
                   name: {{ template "jupyterhub.fullname" . }}-hub-secret
-                  {{- end }}
                   key: hub.db.password
             {{- else if eq .Values.hub.db.type "postgres" }}
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.hub.existingSecret }}
-                  name: {{ .Values.hub.existingSecret }}
-                  {{- else }}
                   name: {{ template "jupyterhub.fullname" . }}-hub-secret
-                  {{- end }}
                   key: hub.db.password
             {{- end }}
             {{- end }}
-            {{- if .Values.hub.extraEnv }}
-            {{- $extraEnvType := typeOf .Values.hub.extraEnv }}
-            {{- /* If we have a list, embed that here directly. This allows for complex configuration from configmap, downward API, etc. */}}
-            {{- if eq $extraEnvType "[]interface {}" }}
-            {{- .Values.hub.extraEnv | toYaml | trimSuffix "\n" | nindent 12 }}
-            {{- else if eq $extraEnvType "map[string]interface {}" }}
-            {{- /* If we have a map, treat those as key-value pairs. */}}
-            {{- range $key, $value := .Values.hub.extraEnv }}
-            - name: {{ $key | quote }}
-              value: {{ $value | quote }}
-            {{- end }}
-            {{- end }}
-            {{- end }}
+            {{- include "jupyterhub.extraEnv" .Values.hub.extraEnv | nindent 12 }}
           ports:
-            - containerPort: 8081
-              name: hub
+            - name: http
+              containerPort: 8081
           {{- if .Values.hub.livenessProbe.enabled }}
           # livenessProbe notes:
           # We don't know how long hub database upgrades could take
@@ -227,15 +228,19 @@ spec:
           livenessProbe:
             initialDelaySeconds: {{ .Values.hub.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.hub.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.hub.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.hub.livenessProbe.failureThreshold }}
             httpGet:
               path: {{ .Values.hub.baseUrl | trimSuffix "/" }}/hub/health
-              port: hub
+              port: http
           {{- end }}
           {{- if .Values.hub.readinessProbe.enabled }}
           readinessProbe:
             initialDelaySeconds: {{ .Values.hub.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.hub.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.hub.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.hub.readinessProbe.failureThreshold }}
             httpGet:
               path: {{ .Values.hub.baseUrl | trimSuffix "/" }}/hub/health
-              port: hub
+              port: http
           {{- end }}
