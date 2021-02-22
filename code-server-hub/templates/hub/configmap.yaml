@@ -4,7 +4,7 @@ metadata:
   name: {{ template "jupyterhub.fullname" . }}-hub-config
   labels:
     {{- include "jupyterhub.labels" . | nindent 4 }}
-data:data:
+data:
   {{- /*
     Resource names exposed to reliably reference them.
 
