@@ -10,7 +10,7 @@ metadata:
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ template "jupyterhub.fullname" . }}
+  name: {{ template "jupyterhub.fullname" . }}-hub
   labels:
     {{- include "jupyterhub.labels" . | nindent 4 }}
     app.kubernetes.io/component: hub
