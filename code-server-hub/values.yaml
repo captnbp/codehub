@@ -347,7 +347,7 @@ singleuser:
       storageAccessModes: [ReadWriteOnce]
   image:
     name: registry.gitlab.com/captnbp/code-server-hub/code-server
-    tag: 1.4.13
+    tag: 1.4.15
     pullPolicy:
     pullSecrets: []
   startTimeout: 300
@@ -370,7 +370,7 @@ singleuser:
       kubespawner_override:
         cmd:
           - code-server
-        image: registry.gitlab.com/captnbp/code-server-hub/code-server:1.4.13
+        image: registry.gitlab.com/captnbp/code-server-hub/code-server:1.4.15
         uid: 1000
         gid: 1000
         fs_gid: 1000
@@ -378,7 +378,7 @@ singleuser:
         allow_privilege_escalation: false
         extra_containers:
           - name: nginx
-            image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.13
+            image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.15
             resources:
               requests:
                 cpu: 100m
@@ -396,7 +396,7 @@ singleuser:
                 drop:
                   - ALL
           - name: oauth
-            image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.4.13
+            image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.4.15
             ports:
               - containerPort: 9095
                 name: oauth
@@ -418,7 +418,7 @@ singleuser:
                 drop:
                   - ALL
           - name: browser
-            image: registry.gitlab.com/captnbp/code-server-hub/browser:1.4.13
+            image: registry.gitlab.com/captnbp/code-server-hub/browser:1.4.15
             ports:
               - containerPort: 6080
                 name: browser
@@ -450,11 +450,11 @@ singleuser:
       kubespawner_override:
         cmd:
           - code-server
-        image: registry.gitlab.com/captnbp/code-server-hub/code-server-anaconda:1.4.13
+        image: registry.gitlab.com/captnbp/code-server-hub/code-server-anaconda:1.4.15
         allow_privilege_escalation: false
         extra_containers:
           - name: nginx
-            image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.13
+            image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.15
             resources:
               requests:
                 cpu: 100m
@@ -472,7 +472,7 @@ singleuser:
                 drop:
                   - ALL
           - name: oauth
-            image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.4.13
+            image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.4.15
             ports:
               - containerPort: 9095
                 name: oauth

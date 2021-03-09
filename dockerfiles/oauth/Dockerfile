@@ -1,7 +1,7 @@
 FROM    ubuntu:20.04
 
 LABEL maintainer="benoit.pourre@doca-consulting.fr"
-LABEL app.kubernetes.io/version="3.9.0"
+LABEL app.kubernetes.io/version="3.9.1"
 LABEL app.kubernetes.io/managed-by="Helm"
 LABEL app.kubernetes.io/part-of="code-server-hub"
 LABEL app.kubernetes.io/component="jupyterhub-nginx-oauth"
