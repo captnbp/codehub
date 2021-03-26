@@ -341,7 +341,7 @@ helm_lint:
 
 hadolint-code-server:
   stage: test
-  image: hadolint/hadolint
+  image: captnbp/gitlab-ci-image:v2.9.10
   script:
     - hadolint dockerfiles/code-server/Dockerfile
   tags:
@@ -349,7 +349,7 @@ hadolint-code-server:
 
 hadolint-code-server-anaconda:
   stage: test
-  image: hadolint/hadolint
+  image: captnbp/gitlab-ci-image:v2.9.10
   script:
     - hadolint dockerfiles/code-server-anaconda/Dockerfile
   tags:
@@ -357,7 +357,7 @@ hadolint-code-server-anaconda:
 
 hadolint-oauth:
   stage: test
-  image: hadolint/hadolint
+  image: captnbp/gitlab-ci-image:v2.9.10
   script:
     - hadolint dockerfiles/oauth/Dockerfile
   tags:
@@ -365,7 +365,7 @@ hadolint-oauth:
 
 hadolint-nginx:
   stage: test
-  image: hadolint/hadolint
+  image: captnbp/gitlab-ci-image:v2.9.10
   script:
     - hadolint dockerfiles/nginx/Dockerfile
   tags:
@@ -373,7 +373,7 @@ hadolint-nginx:
 
 hadolint-browser:
   stage: test
-  image: hadolint/hadolint
+  image: captnbp/gitlab-ci-image:v2.9.10
   script:
     - hadolint dockerfiles/browser/Dockerfile
   tags:
