@@ -46,7 +46,7 @@ echo "complete -o nospace -C /usr/local/bin/vault vault" >> /etc/zsh/zshrc
 echo "Install Ansible and ansible-modules-hashivault"
 apt-get install -y --no-install-recommends python3-pip python3-setuptools twine
 pip3 install --no-cache-dir --upgrade pip
-pip3 install --no-cache-dir hvac elasticsearch virtualenv twine
+pip3 install --no-cache-dir hvac elasticsearch virtualenv twine pytorch torchvision torchaudio cudatoolkit
 
 echo "Cleaning"
 rm -rf /var/lib/apt/lists/* /tmp/*
