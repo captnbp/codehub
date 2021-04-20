@@ -3,6 +3,8 @@ FROM    codercom/code-server:3.9.3
 LABEL maintainer="benoit.pourre@doca-consulting.fr"
 LABEL source="https://gitlab.com/captnbp/code-server-hub"
 
+USER root
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg2 curl ca-certificates && \
     curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub | apt-key add - && \
