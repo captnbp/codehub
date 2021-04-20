@@ -347,13 +347,13 @@ hadolint-code-server:
   tags:
     - server
 
-hadolint-code-server-anaconda:
-  stage: test
-  image: captnbp/gitlab-ci-image:v2.9.11
-  script:
-    - hadolint dockerfiles/code-server-anaconda/Dockerfile
-  tags:
-    - server
+# hadolint-code-server-anaconda:
+#   stage: test
+#   image: captnbp/gitlab-ci-image:v2.9.11
+#   script:
+#     - hadolint dockerfiles/code-server-anaconda/Dockerfile
+#   tags:
+#     - server
 
 hadolint-oauth:
   stage: test
