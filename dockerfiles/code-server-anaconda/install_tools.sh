@@ -7,7 +7,7 @@ CURL_OPTS=""
 echo "Install tools"
 apt-get update >/dev/null
 apt-get dist-upgrade -y
-apt-get install --no-install-recommends -y vim pwgen jq wget unzip pass zsh fonts-powerline \
+apt-get install --no-install-recommends -y vim pwgen jq wget unzip pass zsh fonts-powerline curl \
     htop software-properties-common gpg netcat uuid-runtime dnsutils
 
 echo "Install Oh My Zsh"
@@ -43,10 +43,8 @@ echo "source \$ZSH/oh-my-zsh.sh" >> /etc/zsh/zshrc
 echo "autoload -U +X bashcompinit && bashcompinit" >> /etc/zsh/zshrc
 echo "complete -o nospace -C /usr/local/bin/vault vault" >> /etc/zsh/zshrc
 
-echo "Install Ansible and ansible-modules-hashivault"
-apt-get install -y --no-install-recommends python3-pip python3-setuptools twine
-pip3 install --no-cache-dir --upgrade pip
-pip3 install --no-cache-dir hvac elasticsearch virtualenv twine pytorch torchvision torchaudio cudatoolkit
+conda install -c rapidsai -c nvidia -c numba -c conda-forge cudf
+conda install pylint
 
 echo "Cleaning"
 rm -rf /var/lib/apt/lists/* /tmp/*
