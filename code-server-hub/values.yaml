@@ -28,13 +28,13 @@ imagePullSecrets: []
 hub:
   config:
     JupyterHub:
-      admin_access: true
       authenticator_class: dummy
   service:
     type: ClusterIP
     annotations: {}
     ports:
       nodePort:
+    extraPorts: []
     loadBalancerIP:
   baseUrl: /
   cookieSecret:
@@ -93,9 +93,10 @@ hub:
   extraVolumeMounts: []
   image:
     name: jupyterhub/k8s-hub
-    tag: "0.11.1"
+    tag: "0.11.1-n460.ha772e77d"
     pullPolicy:
     pullSecrets: []
+  resources:
   resources:
     requests:
       cpu: 200m
@@ -197,6 +198,7 @@ proxy:
     nodePorts:
       http:
       https:
+    disableHttpPort: false
     extraPorts: []
     loadBalancerIP:
     loadBalancerSourceRanges: []
@@ -209,7 +211,7 @@ proxy:
       allowPrivilegeEscalation: false
     image:
       name: jupyterhub/configurable-http-proxy
-      tag: 4.2.3
+      tag: 4.3.2
       pullPolicy:
       pullSecrets: []
     extraCommandLineFlags: []
@@ -226,6 +228,8 @@ proxy:
       requests:
         cpu: 200m
         memory: 512Mi
+    defaultTarget:
+    errorTarget:
     extraEnv: {}
     nodeSelector: {}
     tolerations: []
@@ -250,14 +254,14 @@ proxy:
       allowPrivilegeEscalation: false
     image:
       name: jupyterhub/k8s-secret-sync
-      tag: "0.11.1"
+      tag: "0.11.1-n458.h81d261e8"
       pullPolicy:
       pullSecrets: []
     resources: {}
   labels: {}
   https:
     enabled: true
-    type: secret
+    type: cert-manager
     #type: letsencrypt, manual, offload, secret, cert-manager
     letsencrypt:
       contactEmail:
@@ -267,7 +271,7 @@ proxy:
       key:
       cert:
     secret:
-      name: chart-example-tls
+      name:
       key: tls.key
       crt: tls.crt
     hosts: []
@@ -337,8 +341,8 @@ singleuser:
     extraVolumeMounts: []
     static:
       pvcName:
-      subPath: '{username}'
-    capacity: 20Gi
+      subPath: "{username}"
+    capacity: 10Gi
     homeMountPath: /home/coder
     dynamic:
       storageClass:
@@ -347,7 +351,7 @@ singleuser:
       storageAccessModes: [ReadWriteOnce]
   image:
     name: registry.gitlab.com/captnbp/code-server-hub/code-server
-    tag: 1.4.20
+    tag: 1.4.23
     pullPolicy:
     pullSecrets: []
   startTimeout: 300
@@ -370,7 +374,7 @@ singleuser:
       kubespawner_override:
         cmd:
           - code-server
-        image: registry.gitlab.com/captnbp/code-server-hub/code-server:1.4.20
+        image: registry.gitlab.com/captnbp/code-server-hub/code-server:1.4.23
         uid: 1000
         gid: 1000
         fs_gid: 1000
@@ -378,7 +382,7 @@ singleuser:
         allow_privilege_escalation: false
         extra_containers:
           - name: nginx
-            image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.20
+            image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.23
             resources:
               requests:
                 cpu: 100m
@@ -396,7 +400,7 @@ singleuser:
                 drop:
                   - ALL
           - name: oauth
-            image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.4.20
+            image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.4.23
             ports:
               - containerPort: 9095
                 name: oauth
@@ -418,7 +422,7 @@ singleuser:
                 drop:
                   - ALL
           - name: browser
-            image: registry.gitlab.com/captnbp/code-server-hub/browser:1.4.20
+            image: registry.gitlab.com/captnbp/code-server-hub/browser:1.4.23
             ports:
               - containerPort: 6080
                 name: browser
@@ -450,11 +454,11 @@ singleuser:
       kubespawner_override:
         cmd:
           - code-server
-        image: registry.gitlab.com/captnbp/code-server-hub/code-server-anaconda:1.4.20
+        image: registry.gitlab.com/captnbp/code-server-hub/code-server-anaconda:1.4.23
         allow_privilege_escalation: false
         extra_containers:
           - name: nginx
-            image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.20
+            image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.4.23
             resources:
               requests:
                 cpu: 100m
@@ -472,7 +476,7 @@ singleuser:
                 drop:
                   - ALL
           - name: oauth
-            image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.4.20
+            image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.4.23
             ports:
               - containerPort: 9095
                 name: oauth
@@ -535,7 +539,7 @@ scheduling:
       #            hand with an inspection of the user-scheduelrs RBAC resources
       #            that we have forked.
       name: k8s.gcr.io/kube-scheduler
-      tag: v1.19.7
+      tag: v1.19.10 # ref: https://github.com/kubernetes/sig-release/blob/master/releases/patch-releases.md
       pullPolicy:
       pullSecrets: []
     nodeSelector: {}
@@ -544,10 +548,7 @@ scheduling:
       enabled: true
       maxUnavailable: 1
       minAvailable:
-    resources:
-      requests:
-        cpu: 50m
-        memory: 256Mi
+    resources: {}
   podPriority:
     enabled: false
     globalDefault: false
@@ -557,32 +558,48 @@ scheduling:
     enabled: true
     replicas: 0
     containerSecurityContext:
-      runAsUser: 65534
-      runAsGroup: 65534
+      runAsUser: 65534 # nobody user
+      runAsGroup: 65534 # nobody group
       allowPrivilegeEscalation: false
     resources: {}
   corePods:
+    tolerations:
+      - key: hub.jupyter.org/dedicated
+        operator: Equal
+        value: core
+        effect: NoSchedule
+      - key: hub.jupyter.org_dedicated
+        operator: Equal
+        value: core
+        effect: NoSchedule
     nodeAffinity:
       matchNodePurpose: prefer
   userPods:
+    tolerations:
+      - key: hub.jupyter.org/dedicated
+        operator: Equal
+        value: user
+        effect: NoSchedule
+      - key: hub.jupyter.org_dedicated
+        operator: Equal
+        value: user
+        effect: NoSchedule
     nodeAffinity:
       matchNodePurpose: prefer
 
 # prePuller relates to the hook|continuous-image-puller DaemonsSets
 prePuller:
   annotations: {}
-  resources:
-    requests:
-      cpu: 0
-      memory: 0
+  resources: {}
   containerSecurityContext:
-    runAsUser: 65534
-    runAsGroup: 65534
+    runAsUser: 65534 # nobody user
+    runAsGroup: 65534 # nobody group
     allowPrivilegeEscalation: false
   extraTolerations: []
   # hook relates to the hook-image-awaiter Job and hook-image-puller DaemonSet
   hook:
     enabled: true
+    pullOnlyOnChanges: false
     # image and the configuration below relates to the hook-image-awaiter Job
     image:
       name: jupyterhub/k8s-image-awaiter
@@ -596,10 +613,7 @@ prePuller:
     podSchedulingWaitDuration: 10
     nodeSelector: {}
     tolerations: []
-    resources:
-      requests:
-        cpu: 0
-        memory: 0
+    resources: {}
   continuous:
     enabled: true
   pullProfileListImages: true

@@ -80,6 +80,7 @@
     function properly. It is a way to override the default app label's value.
 */}}
 
+
 {{- /*
   jupyterhub.appLabel:
     Used by "jupyterhub.labels".
@@ -128,6 +129,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
     Provides labels: component, app, release, (chart and heritage).
 */}}
 {{- define "jupyterhub.labels" -}}
+app.kubernetes.io/component: {{ include "jupyterhub.componentLabel" . }}
 {{ include "jupyterhub.commonLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}

@@ -6,7 +6,7 @@ it would help in order to scale down a node.
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ template "jupyterhub.fullname" . }}-user-placeholder
+  name: {{ include "jupyterhub.user-placeholder.fullname" . }}
   labels:
     {{- include "jupyterhub.labels" . | nindent 4 }}
     app.kubernetes.io/component: user-placeholder

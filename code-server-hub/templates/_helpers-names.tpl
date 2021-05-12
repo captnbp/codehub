@@ -69,9 +69,21 @@ Create chart name and version as used by the chart label.
     {{- include "jupyterhub.fullname.dash" . }}hub
 {{- end }}
 
-{{- /* hub Secret */}}
-{{- define "jupyterhub.hub-secret.fullname" -}}
-        {{- include "jupyterhub.hub.fullname" . }}
+{{- /* hub-existing-secret Secret */}}
+{{- define "jupyterhub.hub-existing-secret.fullname" -}}
+    {{- /* A hack to avoid issues from invoking this from a parent Helm chart. */}}
+    {{- $existing_secret := .Values.hub.existingSecret }}
+    {{- if ne .Chart.Name "code-server-hub" }}
+        {{- $existing_secret = .Values.jupyterhub.hub.existingSecret }}
+    {{- end }}
+    {{- if $existing_secret }}
+        {{- $existing_secret }}
+    {{- end }}
+{{- end }}
+
+{{- /* hub-existing-secret-or-default Secret */}}
+{{- define "jupyterhub.hub-existing-secret-or-default.fullname" -}}
+    {{- include "jupyterhub.hub-existing-secret.fullname" . | default (include "jupyterhub.hub.fullname" .) }}
 {{- end }}
 
 {{- /* hub PVC */}}
@@ -212,7 +224,8 @@ Create chart name and version as used by the chart label.
 fullname: {{ include "jupyterhub.fullname" . | quote }}
 fullname-dash: {{ include "jupyterhub.fullname.dash" . | quote }}
 hub: {{ include "jupyterhub.hub.fullname" . | quote }}
-hub-secret: {{ include "jupyterhub.hub-secret.fullname" . | quote }}
+hub-existing-secret: {{ include "jupyterhub.hub-existing-secret.fullname" . | quote }}
+hub-existing-secret-or-default: {{ include "jupyterhub.hub-existing-secret-or-default.fullname" . | quote }}
 hub-pvc: {{ include "jupyterhub.hub-pvc.fullname" . | quote }}
 proxy: {{ include "jupyterhub.proxy.fullname" . | quote }}
 proxy-api: {{ include "jupyterhub.proxy-api.fullname" . | quote }}

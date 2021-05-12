@@ -1,4 +1,3 @@
-
 {{- /*
 These user-placeholder pods can be used to test cluster autoscaling in a
 controlled fashion.
@@ -29,14 +28,16 @@ spec:
         {{- include "jupyterhub.matchLabels" . | nindent 8 }}
     spec:
       {{- if .Values.scheduling.podPriority.enabled }}
-      priorityClassName: {{ template "jupyterhub.fullname" . }}-user-placeholder
+      priorityClassName: {{ include "jupyterhub.user-placeholder-priority.fullname" . }}
       {{- end }}
       {{- if .Values.scheduling.userScheduler.enabled }}
       schedulerName: {{ include "jupyterhub.user-scheduler.fullname" . }}
       {{- end }}
-      tolerations:
-        {{- include "jupyterhub.userTolerations" . | nindent 8 }}
       nodeSelector: {{ toJson .Values.singleuser.nodeSelector }}
+      {{- with concat .Values.scheduling.userPods.tolerations .Values.singleuser.extraTolerations }}
+      tolerations:
+        {{- . | toYaml | nindent 8 }}
+      {{- end }}
       {{- if include "jupyterhub.userAffinity" . }}
       affinity:
         {{- include "jupyterhub.userAffinity" . | nindent 8 }}

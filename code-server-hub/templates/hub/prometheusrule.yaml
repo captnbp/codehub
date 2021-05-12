@@ -2,7 +2,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: {{ template "jupyterhub.fullname" . }}
+  name: {{ include "jupyterhub.hub.fullname" . }}
 {{- with .Values.metrics.prometheusRule.namespace }}
   namespace: {{ . }}
 {{- end }}
