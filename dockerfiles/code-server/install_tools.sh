@@ -113,7 +113,7 @@ chmod 755 /usr/local/bin/hadolint
 echo "Install bat"
 latest_release_url="https://github.com/sharkdp/bat/releases"
 TAG=$(curl -Ls $latest_release_url | grep 'href="/sharkdp/bat/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
-curl ${CURL_OPTS} -L "https://github.com/sharkdp/bat/releases/download/${TAG}/bat_${TAG}_amd64.deb" \
+curl ${CURL_OPTS} -L "https://github.com/sharkdp/bat/releases/download/v${TAG}/bat_${TAG}_amd64.deb" \
     -o /tmp/bat.deb >/dev/null
 dpkg -i /tmp/bat.deb
 rm /tmp/bat.deb
