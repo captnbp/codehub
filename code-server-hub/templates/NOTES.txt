@@ -30,12 +30,7 @@ You can find the NodePorts of JupyterHub by running:
 
 You should be able to access JupyterHub using your configured ingress at:
 {{ range $host := .Values.ingress.hosts }}
-  http://{{ $host }}{{ $.Values.hub.baseUrl | trimSuffix "/" }}/
-{{- end }}
-{{- range $tls := .Values.ingress.tls }}
-  {{- range $host := $tls.hosts }}
   https://{{ $host }}{{ $.Values.hub.baseUrl | trimSuffix "/" }}/
-  {{- end }}
 {{- end }}
 
 {{- end }}
