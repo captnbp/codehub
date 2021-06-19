@@ -1,4 +1,4 @@
-FROM    codercom/code-server:3.10.0
+FROM    codercom/code-server:3.10.2
 
 LABEL maintainer="benoit.pourre@doca-consulting.fr"
 LABEL source="https://gitlab.com/captnbp/code-server-hub"
