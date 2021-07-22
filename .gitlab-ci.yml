@@ -332,7 +332,7 @@ container_scanning_code_server_anaconda:
 
 helm_lint:
   stage: test
-  image: captnbp/gitlab-ci-image:v2.9.11
+  image: captnbp/gitlab-ci-image:latest
   script:
     - helm dependency update code-server-hub
     - helm lint code-server-hub --set proxy.secretToken=`openssl rand -hex 32`
@@ -341,7 +341,7 @@ helm_lint:
 
 # hadolint-code-server:
 #   stage: test
-#   image: captnbp/gitlab-ci-image:v2.9.11
+#   image: captnbp/gitlab-ci-image:latest
 #   script:
 #     - hadolint dockerfiles/code-server/Dockerfile
 #   tags:
@@ -349,7 +349,7 @@ helm_lint:
 
 # hadolint-code-server-anaconda:
 #   stage: test
-#   image: captnbp/gitlab-ci-image:v2.9.11
+#   image: captnbp/gitlab-ci-image:latest
 #   script:
 #     - hadolint dockerfiles/code-server-anaconda/Dockerfile
 #   tags:
@@ -357,7 +357,7 @@ helm_lint:
 
 hadolint-oauth:
   stage: test
-  image: captnbp/gitlab-ci-image:v2.9.11
+  image: captnbp/gitlab-ci-image:latest
   script:
     - hadolint dockerfiles/oauth/Dockerfile
   tags:
@@ -365,7 +365,7 @@ hadolint-oauth:
 
 hadolint-nginx:
   stage: test
-  image: captnbp/gitlab-ci-image:v2.9.11
+  image: captnbp/gitlab-ci-image:latest
   script:
     - hadolint dockerfiles/nginx/Dockerfile
   tags:
@@ -373,7 +373,7 @@ hadolint-nginx:
 
 hadolint-browser:
   stage: test
-  image: captnbp/gitlab-ci-image:v2.9.11
+  image: captnbp/gitlab-ci-image:latest
   script:
     - hadolint dockerfiles/browser/Dockerfile
   tags:
@@ -381,7 +381,7 @@ hadolint-browser:
 
 helm_package:
   stage: release
-  image: captnbp/gitlab-ci-image:v2.9.11
+  image: captnbp/gitlab-ci-image:latest
   script:
     - |
       if [[ -z "$CI_COMMIT_TAG" ]]; then
@@ -403,7 +403,7 @@ helm_package:
 
 # deploy_review:
 #   stage: deploy
-#   image: captnbp/gitlab-ci-image:v2.9.11
+#   image: captnbp/gitlab-ci-image:latest
 #   variables:
 #     URL: ${CI_ENVIRONMENT_SLUG}.server.doca.ovh
 #     NAMESPACE: ${KUBE_NAMESPACE}
@@ -434,7 +434,7 @@ helm_package:
 
 # stop_review:
 #   stage: deploy
-#   image: captnbp/gitlab-ci-image:v2.9.11
+#   image: captnbp/gitlab-ci-image:latest
 #   variables:
 #     NAMESPACE: ${KUBE_NAMESPACE}
 #   environment:
@@ -453,7 +453,7 @@ helm_package:
 
 # deploy_prod:
 #   stage: deploy
-#   image: captnbp/gitlab-ci-image:v2.9.11
+#   image: captnbp/gitlab-ci-image:latest
 #   variables:
 #     URL: code-hub.server.doca.ovh
 #     NAMESPACE: code-hub-prod
