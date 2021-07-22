@@ -355,13 +355,13 @@ helm_lint:
 #   tags:
 #     - server
 
-hadolint-oauth:
-  stage: test
-  image: captnbp/gitlab-ci-image:latest
-  script:
-    - hadolint dockerfiles/oauth/Dockerfile
-  tags:
-    - server
+# hadolint-oauth:
+#   stage: test
+#   image: captnbp/gitlab-ci-image:latest
+#   script:
+#     - hadolint dockerfiles/oauth/Dockerfile
+#   tags:
+#     - server
 
 hadolint-nginx:
   stage: test
