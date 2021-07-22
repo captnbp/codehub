@@ -339,13 +339,13 @@ helm_lint:
   tags:
     - server
 
-hadolint-code-server:
-  stage: test
-  image: captnbp/gitlab-ci-image:v2.9.11
-  script:
-    - hadolint dockerfiles/code-server/Dockerfile
-  tags:
-    - server
+# hadolint-code-server:
+#   stage: test
+#   image: captnbp/gitlab-ci-image:v2.9.11
+#   script:
+#     - hadolint dockerfiles/code-server/Dockerfile
+#   tags:
+#     - server
 
 # hadolint-code-server-anaconda:
 #   stage: test
