@@ -4,7 +4,10 @@
 
     proxy.secretToken       / hub.config.ConfigurableHTTPProxy.auth_token
     hub.cookieSecret        / hub.config.JupyterHub.cookie_secret
-    auth.state.cryptoKey    / hub.config.CryptKeeper.keys
+    auth.state.cryptoKey*   / hub.config.CryptKeeper.keys
+
+    *Note that the entire auth section is deprecated and users
+    are forced through "fail" in NOTES.txt to migrate to hub.config.
 
     Note that lookup logic returns falsy value when run with
     `helm diff upgrade`, so it is a bit troublesome to test.
@@ -29,7 +32,9 @@
 {{- end }}
 
 {{- define "jupyterhub.hub.config.ConfigurableHTTPProxy.auth_token" -}}
-    {{- if .Values.proxy.secretToken }}
+    {{- if (.Values.hub.config | dig "ConfigurableHTTPProxy" "auth_token" "") }}
+        {{- .Values.hub.config.ConfigurableHTTPProxy.auth_token }}
+    {{- else if .Values.proxy.secretToken }}
         {{- .Values.proxy.secretToken }}
     {{- else }}
         {{- $k8s_state := lookup "v1" "Secret" .Release.Namespace (include "jupyterhub.hub.fullname" .) | default (dict "data" (dict)) }}
@@ -42,7 +47,9 @@
 {{- end }}
 
 {{- define "jupyterhub.hub.config.JupyterHub.cookie_secret" -}}
-    {{- if .Values.hub.cookieSecret }}
+    {{- if (.Values.hub.config | dig "JupyterHub" "cookie_secret" "") }}
+        {{- .Values.hub.config.JupyterHub.cookie_secret }}
+    {{- else if .Values.hub.cookieSecret }}
         {{- .Values.hub.cookieSecret }}
     {{- else }}
         {{- $k8s_state := lookup "v1" "Secret" .Release.Namespace (include "jupyterhub.hub.fullname" .) | default (dict "data" (dict)) }}
@@ -55,7 +62,7 @@
 {{- end }}
 
 {{- define "jupyterhub.hub.config.CryptKeeper.keys" -}}
-    {{- if .Values.hub.config.CryptKeeper }}
+    {{- if (.Values.hub.config | dig "CryptKeeper" "keys" "") }}
         {{- .Values.hub.config.CryptKeeper.keys | join ";" }}
     {{- else }}
         {{- $k8s_state := lookup "v1" "Secret" .Release.Namespace (include "jupyterhub.hub.fullname" .) | default (dict "data" (dict)) }}

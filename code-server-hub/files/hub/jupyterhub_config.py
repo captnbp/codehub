@@ -72,6 +72,8 @@ if db_password is not None:
         os.environ["MYSQL_PWD"] = db_password
     elif db_type == "postgres":
         os.environ["PGPASSWORD"] = db_password
+    else:
+        print(f"Warning: hub.db.password is ignored for hub.db.type={db_type}")
 
 
 # c.JupyterHub configuration from Helm chart's configmap
@@ -382,10 +384,7 @@ set_config_if_not_none(c.Spawner, "default_url", "singleuser.defaultUrl")
 
 cloud_metadata = get_config("singleuser.cloudMetadata", {})
 
-if (
-    cloud_metadata.get("blockWithIptables") == True
-    or cloud_metadata.get("enabled") == False
-):
+if cloud_metadata.get("blockWithIptables") == True:
     # Use iptables to block access to cloud metadata by default
     network_tools_image_name = get_config("singleuser.networkTools.image.name")
     network_tools_image_tag = get_config("singleuser.networkTools.image.tag")
@@ -430,9 +429,10 @@ if os.path.isdir(config_dir):
 #
 # NOTE: ConfigurableHTTPProxy.auth_token is set through an environment variable
 #       that is set using the chart managed secret.
-c.JupyterHub.cookie_secret = a2b_hex(
-    get_secret_value("hub.config.JupyterHub.cookie_secret")
-)
+c.JupyterHub.cookie_secret = get_secret_value("hub.config.JupyterHub.cookie_secret")
+# NOTE: CryptKeeper.keys should be a list of strings, but we have encoded as a
+#       single string joined with ; in the k8s Secret.
+#
 c.CryptKeeper.keys = get_secret_value("hub.config.CryptKeeper.keys").split(";")
 
 # load hub.config values, except potentially seeded secrets already loaded

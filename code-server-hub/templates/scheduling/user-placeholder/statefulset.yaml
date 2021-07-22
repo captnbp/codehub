@@ -1,3 +1,4 @@
+
 {{- /*
 These user-placeholder pods can be used to test cluster autoscaling in a
 controlled fashion.

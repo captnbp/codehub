@@ -28,6 +28,7 @@ imagePullSecrets: []
 hub:
   config:
     JupyterHub:
+      admin_access: true
       authenticator_class: dummy
   service:
     type: ClusterIP
@@ -39,7 +40,6 @@ hub:
   baseUrl: /
   cookieSecret:
   initContainers: []
-  uid: 1000
   fsGid: 1000
   nodeSelector: {}
   tolerations: []
@@ -85,7 +85,6 @@ hub:
                           container["env"] = [ {'name': k, 'value': v} for k, v in (self.get_env() or {}).items()]
               return super(KubeSpawner, self).get_pod_manifest()
       c.JupyterHub.spawner_class = KubeSpawner
-  extraConfigMap: {}
   extraFiles: {}
   extraEnv: {}
   extraContainers: []
@@ -93,10 +92,9 @@ hub:
   extraVolumeMounts: []
   image:
     name: jupyterhub/k8s-hub
-    tag: "0.11.1-n460.ha772e77d"
+    tag: "1.0.1"
     pullPolicy:
     pullSecrets: []
-  resources:
   resources:
     requests:
       cpu: 200m
@@ -109,6 +107,7 @@ hub:
     capabilities:
       drop:
         - ALL
+  lifecycle: {}
   services: {}
   pdb:
     enabled: false
@@ -155,6 +154,8 @@ hub:
     failureThreshold: 1000
     timeoutSeconds: 1
   #existingSecret:
+  serviceAccount:
+    annotations: {}
 
 rbac:
   enabled: true
@@ -211,7 +212,7 @@ proxy:
       allowPrivilegeEscalation: false
     image:
       name: jupyterhub/configurable-http-proxy
-      tag: 4.3.2
+      tag: 4.4.0
       pullPolicy:
       pullSecrets: []
     extraCommandLineFlags: []
@@ -254,7 +255,7 @@ proxy:
       allowPrivilegeEscalation: false
     image:
       name: jupyterhub/k8s-secret-sync
-      tag: "0.11.1-n458.h81d261e8"
+      tag: "1.0.1"
       pullPolicy:
       pullSecrets: []
     resources: {}
@@ -294,13 +295,13 @@ singleuser:
   networkTools:
     image:
       name: jupyterhub/k8s-network-tools
-      tag: "0.11.1"
+      tag: "1.0.1"
       pullPolicy:
       pullSecrets: []
   cloudMetadata:
     # block set to true will append a privileged initContainer using the
     # iptables to block the sensitive metadata server at the provided ip.
-    blockWithIptables: false
+    blockWithIptables: true
     ip: 169.254.169.254
   networkPolicy:
     enabled: false
@@ -539,7 +540,7 @@ scheduling:
       #            hand with an inspection of the user-scheduelrs RBAC resources
       #            that we have forked.
       name: k8s.gcr.io/kube-scheduler
-      tag: v1.19.10 # ref: https://github.com/kubernetes/sig-release/blob/master/releases/patch-releases.md
+      tag: v1.19.10 # ref: https://github.com/kubernetes/sig-release/blob/HEAD/releases/patch-releases.md
       pullPolicy:
       pullSecrets: []
     nodeSelector: {}
@@ -549,6 +550,8 @@ scheduling:
       maxUnavailable: 1
       minAvailable:
     resources: {}
+    serviceAccount:
+      annotations: {}
   podPriority:
     enabled: false
     globalDefault: false
@@ -599,7 +602,7 @@ prePuller:
   # hook relates to the hook-image-awaiter Job and hook-image-puller DaemonSet
   hook:
     enabled: true
-    pullOnlyOnChanges: false
+    pullOnlyOnChanges: true
     # image and the configuration below relates to the hook-image-awaiter Job
     image:
       name: jupyterhub/k8s-image-awaiter
@@ -614,6 +617,8 @@ prePuller:
     nodeSelector: {}
     tolerations: []
     resources: {}
+    serviceAccount:
+      annotations: {}
   continuous:
     enabled: true
   pullProfileListImages: true

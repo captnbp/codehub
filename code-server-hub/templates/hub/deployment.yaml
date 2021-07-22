@@ -26,7 +26,7 @@ spec:
         {{- . | toYaml | trimSuffix "\n" | nindent 8 }}
         {{- end }}
       annotations:
-        # This lets us autorestart when the secret changes!
+        {{- /* This lets us autorestart when the secret changes! */}}
         checksum/config-map: {{ include (print .Template.BasePath "/hub/configmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print .Template.BasePath "/hub/secret.yaml") . | sha256sum }}
         {{- with .Values.hub.annotations }}
@@ -117,13 +117,13 @@ spec:
             {{- if .Values.debug.enabled }}
             - --debug
             {{- end }}
-            {{- /*
+            {{- /* NOTE:
             We want to do automatic upgrades for sqlite-pvc by default, but
             allow users to opt out of that if they want. Users using their own
             db need to 'opt in' Go Templates treat nil and "" and false as
             'false', making this code complex. We can probably make this a
-            one-liner, but doing combinations of boolean vars in go templates is
-            very inelegant & hard to reason about.
+              one-liner, but doing combinations of boolean vars in go templates
+              is very inelegant & hard to reason about.
             */}}
             {{- $upgradeType := typeOf .Values.hub.db.upgrade }}
             {{- if eq $upgradeType "bool" }}
@@ -175,15 +175,13 @@ spec:
           {{- with .Values.hub.image.pullPolicy }}
           imagePullPolicy: {{ . }}
           {{- end }}
-          {{- /* Below is deprecation logic of .Values.hub.uid */}}
-          {{- if .Values.hub.containerSecurityContext }}
-          {{- $securityContext := dict }}
-          {{- if hasKey .Values.hub "uid" }}
-          {{- $_ := merge $securityContext (dict "runAsUser" .Values.hub.uid) }}
-          {{- end }}
-          {{- $_ := merge $securityContext .Values.hub.containerSecurityContext }}
+          {{- with .Values.hub.containerSecurityContext }}
           securityContext:
-            {{- $securityContext | toYaml | trimSuffix "\n" | nindent 12 }}
+            {{- . | toYaml | trimSuffix "\n" | nindent 12 }}
+          {{- end }}
+          {{- with .Values.hub.lifecycle }}
+          lifecycle:
+            {{- . | toYaml | trimSuffix "\n" | nindent 12 }}
           {{- end }}
           env:
             - name: PYTHONUNBUFFERED
@@ -197,23 +195,28 @@ spec:
             - name: CONFIGPROXY_AUTH_TOKEN
               valueFrom:
                 secretKeyRef:
-                  # NOTE: References the chart managed k8s Secret even if
-                  #       hub.existingSecret is specified to avoid using the
-                  #       lookup function on the user managed k8s Secret.
+                  {{- /* NOTE:
+                    References the chart managed k8s Secret even if
+                    hub.existingSecret is specified to avoid using the lookup
+                    function on the user managed k8s Secret which is assumed to
+                    not be possible.
+                  */}}
                   name: {{ include "jupyterhub.hub.fullname" . }}
                   key: hub.config.ConfigurableHTTPProxy.auth_token
-            {{- include "jupyterhub.extraEnv" .Values.hub.extraEnv | nindent 12 }}
+            {{- with .Values.hub.extraEnv }}
+            {{- include "jupyterhub.extraEnv" . | nindent 12 }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 8081
           {{- if .Values.hub.livenessProbe.enabled }}
-          # livenessProbe notes:
-          # We don't know how long hub database upgrades could take
-          # so having a liveness probe could be a bit risky unless we put
-          # a initialDelaySeconds value with long enough margin for that
-          # to not be an issue. If it is too short, we could end up aborting
-          # database upgrades midway or ending up in an infinite restart
-          # loop.
+          {{- /* NOTE:
+            We don't know how long hub database upgrades could take so having a
+            liveness probe could be a bit risky unless we put a
+            initialDelaySeconds value with long enough margin for that to not be
+            an issue. If it is too short, we could end up aborting database
+            upgrades midway or ending up in an infinite restart loop.
+          */}}
           livenessProbe:
             initialDelaySeconds: {{ .Values.hub.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.hub.livenessProbe.periodSeconds }}
