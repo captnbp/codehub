@@ -1,4 +1,4 @@
-FROM    nvcr.io/nvidia/pytorch:21.03-py3
+FROM    nvcr.io/nvidia/pytorch:21.06k9s-py3
 
 ENV DEBIAN_FRONTEND noninteractive
 
