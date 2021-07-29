@@ -1,4 +1,4 @@
-FROM alpine:3.12
+FROM alpine:3.14
 
 EXPOSE 6080
 
@@ -8,7 +8,7 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/reposit
 # Install basic packages
 # hadolint ignore=DL3018
 RUN apk --update --no-cache add chromium x11vnc novnc xvfb openbox supervisor xfce4-terminal \
-        wget ca-certificates ttf-ubuntu-font-family ttf-font-awesome && \
+        wget ca-certificates ttf-ubuntu-font-family ttf-font-awesome websockify && \
     update-ca-certificates
 
 # Set index.html for auto loading
