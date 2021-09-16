@@ -34,7 +34,7 @@ RUN ARCH="$(dpkg --print-architecture)" && \
     mkdir -p /etc/fixuid && \
     printf "user: coder\ngroup: coder\n" > /etc/fixuid/config.yml
 
-RUN curl -L https://github.com/cdr/code-server/releases/download/v3.10.2/code-server_3.10.2_amd64.deb -o /tmp/code-server_3.10.2_amd64.deb && dpkg -i /tmp/code-server*$(dpkg --print-architecture).deb && rm /tmp/code-server*.deb
+RUN curl -L https://github.com/cdr/code-server/releases/download/v3.12.0/code-server_3.12.0_amd64.deb -o /tmp/code-server_3.12.0_amd64.deb && dpkg -i /tmp/code-server*$(dpkg --print-architecture).deb && rm /tmp/code-server*.deb
 
 EXPOSE 8080
 # This way, if someone sets $DOCKER_USER, docker-exec will still work as
