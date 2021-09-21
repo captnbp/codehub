@@ -1,2 +1,4 @@
 config.yaml
 code-*.tgz
+code-server-hub-old
+codehub/charts
