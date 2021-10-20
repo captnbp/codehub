@@ -60,10 +60,10 @@ Return the proper Docker Image Registry Secret Names
 {{- end -}}
 
 {{/*
-Return the proper Docker Image Registry Secret Names (deprecated: use common.images.renderPullSecrets instead)
-{{ include "common.images.pullSecrets" ( dict "images" (list .Values.path.to.the.image1, .Values.path.to.the.image2) "global" .Values.global) }}
+Return the proper Docker Image Registry Secret Names
+{{ include "jupyterhub.imagePullSecretsList" ( dict "images" (list .Values.path.to.the.image1, .Values.path.to.the.image2) "global" .Values.global) }}
 */}}
-{{- define "common.images.pullSecrets.list" -}}
+{{- define "jupyterhub.imagePullSecretsList" -}}
   {{- $pullSecrets := list }}
 
   {{- if .global }}
@@ -85,13 +85,11 @@ Return the proper Docker Image Registry Secret Names (deprecated: use common.ima
   {{- end }}
 {{- end -}}
 
-
-
 {{/*
 Return the proper Docker Image Registry Secret Names list
 */}}
 {{- define "jupyterhub.imagePullSecrets.list" -}}
-{{- include "common.images.pullSecrets.list" (dict "images" (list .Values.hub.image .Values.proxy.image .Values.auxiliaryImage) "global" .Values.global) -}}
+{{- include "jupyterhub.imagePullSecretsList" (dict "images" (list .Values.hub.image .Values.proxy.image .Values.auxiliaryImage) "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
