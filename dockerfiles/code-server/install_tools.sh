@@ -32,7 +32,7 @@ rm -Rf /tmp/linux-amd64/
 
 echo "Install Packer"
 latest_release_url="https://github.com/hashicorp/packer/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/packer/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/packer/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
 curl ${CURL_OPTS} -L "https://releases.hashicorp.com/packer/${TAG}/packer_${TAG}_linux_amd64.zip" \
     -o /tmp/packer.zip >/dev/null
 unzip /tmp/packer.zip -d /tmp/ >/dev/null
@@ -42,7 +42,7 @@ packer -autocomplete-install
 
 echo "Install Terraform"
 latest_release_url="https://github.com/hashicorp/terraform/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/terraform/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/terraform/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
 curl ${CURL_OPTS} -L "https://releases.hashicorp.com/terraform/${TAG}/terraform_${TAG}_linux_amd64.zip" \
     -o /tmp/terraform.zip >/dev/null
 unzip /tmp/terraform.zip -d /tmp/ >/dev/null
@@ -53,7 +53,7 @@ terraform -install-autocomplete
 
 echo "Install Vault"
 latest_release_url="https://github.com/hashicorp/vault/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/vault/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/vault/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
 curl ${CURL_OPTS} -L "https://releases.hashicorp.com/vault/${TAG}/vault_${TAG}_linux_amd64.zip" \
     -o /tmp/vault.zip >/dev/null
 unzip /tmp/vault.zip -d /tmp/ >/dev/null
@@ -64,7 +64,7 @@ vault -autocomplete-install
 
 echo "Install k9s"
 latest_release_url="https://github.com/derailed/k9s/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/derailed/k9s/releases/tag/v' | grep -v beta  | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
+TAG=$(curl -Ls $latest_release_url | grep 'href="/derailed/k9s/releases/tag/v' | grep -v beta  | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
 curl ${CURL_OPTS} -L "https://github.com/derailed/k9s/releases/download/${TAG}/k9s_Linux_x86_64.tar.gz" \
     -o /tmp/k9s.tar.gz >/dev/null
 tar zxf /tmp/k9s.tar.gz -C /tmp/ >/dev/null
@@ -74,7 +74,7 @@ rm /tmp/k9s.tar.gz
 
 echo "Install popeye"
 latest_release_url="https://github.com/derailed/popeye/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/derailed/popeye/releases/tag/v' | grep -v beta  | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
+TAG=$(curl -Ls $latest_release_url | grep 'href="/derailed/popeye/releases/tag/v' | grep -v beta  | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
 curl ${CURL_OPTS} -L "https://github.com/derailed/popeye/releases/download/${TAG}/popeye_Linux_x86_64.tar.gz" \
     -o /tmp/popeye.tar.gz >/dev/null
 tar zxf /tmp/popeye.tar.gz -C /tmp/ >/dev/null
@@ -84,7 +84,7 @@ rm /tmp/popeye.tar.gz
 
 echo "Install havener"
 latest_release_url="https://github.com/homeport/havener/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/homeport/havener/releases/tag/v' | grep -v beta  | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+TAG=$(curl -Ls $latest_release_url | grep 'href="/homeport/havener/releases/tag/v' | grep -v beta  | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
 curl ${CURL_OPTS} -L "https://github.com/homeport/havener/releases/download/v${TAG}/havener_${TAG}_linux_amd64.tar.gz" \
     -o /tmp/havener.tar.gz >/dev/null
 tar zxf /tmp/havener.tar.gz -C /tmp/ >/dev/null
@@ -94,7 +94,7 @@ rm /tmp/havener.tar.gz
 
 echo "Install Scaleway scw cli"
 latest_release_url="https://github.com/scaleway/scaleway-cli/releases/"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/scaleway/scaleway-cli/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+TAG=$(curl -Ls $latest_release_url | grep 'href="/scaleway/scaleway-cli/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
 wget "https://github.com/scaleway/scaleway-cli/releases/download/v${TAG}/scw-${TAG}-linux-x86_64" -O /usr/local/bin/scw >/dev/null
 chmod 755 /usr/local/bin/scw
 
@@ -105,14 +105,14 @@ chmod 755 /usr/local/bin/mc
 
 echo "Install Hadolint"
 latest_release_url="https://github.com/hadolint/hadolint/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/hadolint/hadolint/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
+TAG=$(curl -Ls $latest_release_url | grep 'href="/hadolint/hadolint/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
 curl ${CURL_OPTS} -L "https://github.com/hadolint/hadolint/releases/download/${TAG}/hadolint-Linux-x86_64" \
     -o /usr/local/bin/hadolint >/dev/null
 chmod 755 /usr/local/bin/hadolint
 
 echo "Install bat"
 latest_release_url="https://github.com/sharkdp/bat/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/sharkdp/bat/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+TAG=$(curl -Ls $latest_release_url | grep 'href="/sharkdp/bat/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
 curl ${CURL_OPTS} -L "https://github.com/sharkdp/bat/releases/download/v${TAG}/bat_${TAG}_amd64.deb" \
     -o /tmp/bat.deb >/dev/null
 dpkg -i /tmp/bat.deb
