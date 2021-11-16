@@ -51,7 +51,7 @@ hub:
     repository: bitnami/jupyterhub
     ## @param hub.image.tag Hub image tag (immutabe tags are recommended)
     ##
-    tag: 1.4.2-debian-10-r78
+    tag: 1.5.0-debian-10-r7
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -160,11 +160,11 @@ hub:
       adminUsers: []
     
     ## @param hub.auth.gitlab.enabled Enable Hub Gitlab authenticator
-    ## @param hub.auth.oauth.allowedGitlabGroups Gitlab url for Hub Gitlab authenticator
-    ## @param hub.auth.oauth.allowedGitlabGroups Gitlab group whitelisted IDs for Hub Gitlab authenticator
-    ## @param hub.auth.oauth.allowedProjectIds Gitlab allowed project IDs for Hub Gitlab authenticator
-    ## @param hub.auth.oauth.clientId Client ID for Hub Gitlab authenticator
-    ## @param hub.auth.oauth.clientSecret Client Secret for Hub Gitlab authenticator
+    ## @param hub.auth.gitlab.allowedGitlabGroups Gitlab url for Hub Gitlab authenticator
+    ## @param hub.auth.gitlab.allowedGitlabGroups Gitlab group whitelisted IDs for Hub Gitlab authenticator
+    ## @param hub.auth.gitlab.allowedProjectIds Gitlab allowed project IDs for Hub Gitlab authenticator
+    ## @param hub.auth.gitlab.clientId Client ID for Hub Gitlab authenticator
+    ## @param hub.auth.gitlab.clientSecret Client Secret for Hub Gitlab authenticator
     ##
     gitlab:
       enabled: true
@@ -684,7 +684,7 @@ proxy:
   image:
     registry: docker.io
     repository: bitnami/configurable-http-proxy
-    tag: 4.5.0-debian-10-r87
+    tag: 4.5.0-debian-10-r117
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1041,6 +1041,14 @@ proxy:
     ## @param proxy.ingress.enabled Set to true to enable ingress record generation
     ##
     enabled: false
+    ## @param ingress.apiVersion Force Ingress API version (automatically detected if not set)
+    ##
+    apiVersion: ""
+    ## @param ingress.ingressClassName IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
+    ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster.
+    ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+    ##
+    ingressClassName: ""
     ## @param proxy.ingress.path Path to the Proxy pod.
     ##
     path: /
@@ -1323,7 +1331,7 @@ singleuser:
   image:
     registry: docker.io
     repository: bitnami/jupyter-base-notebook
-    tag: 1.4.2-debian-10-r54
+    tag: 1.5.0-debian-10-r5
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1514,7 +1522,7 @@ singleuser:
 auxiliaryImage:
   registry: docker.io
   repository: bitnami/bitnami-shell
-  tag: 10-debian-10-r223
+  tag: 10-debian-10-r253
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.
   ## Secrets must be manually created in the namespace.

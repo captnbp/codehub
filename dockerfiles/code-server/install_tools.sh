@@ -8,7 +8,7 @@ echo "Install tools"
 apt-get update >/dev/null
 apt-get dist-upgrade -y
 apt-get install --no-install-recommends -y vim pwgen jq wget unzip pass zsh fonts-powerline \
-    htop software-properties-common gpg netcat uuid-runtime dnsutils exa
+    htop software-properties-common gpg netcat uuid-runtime dnsutils exa skopeo
 
 echo "Install Oh My Zsh"
 sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
