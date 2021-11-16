@@ -1314,7 +1314,7 @@ singleuser:
   image:
     registry: registry.gitlab.com/
     repository: registry.gitlab.com/code-server-hub/code-server
-    tag: 1.5.6
+    tag: 1.6.0
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1440,7 +1440,7 @@ singleuser:
   ##
   sidecars:
     - name: nginx
-      image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.5.6
+      image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.6.0
       resources:
         requests:
           cpu: 100m
@@ -1458,7 +1458,7 @@ singleuser:
           drop:
             - ALL
     - name: oauth
-      image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.5.6
+      image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.6.0
       ports:
         - containerPort: 9095
           name: oauth
@@ -1480,7 +1480,7 @@ singleuser:
           drop:
             - ALL
     # - name: browser
-    #   image: registry.gitlab.com/captnbp/code-server-hub/browser:1.5.6
+    #   image: registry.gitlab.com/captnbp/code-server-hub/browser:1.6.0
     #   ports:
     #     - containerPort: 6080
     #       name: browser
