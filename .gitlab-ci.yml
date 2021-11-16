@@ -18,7 +18,7 @@ stages:
   - release
 
 include:
-  - template: Jobs/Code-Quality.gitlab-ci.yml  # https://gitlab.com/gitlab-org/gitlab-foss/blob/master/lib/gitlab/ci/templates/Jobs/Code-Quality.gitlab-ci.yml
+  #- template: Jobs/Code-Quality.gitlab-ci.yml  # https://gitlab.com/gitlab-org/gitlab-foss/blob/master/lib/gitlab/ci/templates/Jobs/Code-Quality.gitlab-ci.yml
   - template: Security/SAST.gitlab-ci.yml
 
 sast:
@@ -30,10 +30,10 @@ sast:
   tags:
     - server
 
-code_quality:
-  stage: test
-  tags:
-    - server
+# code_quality:
+#   stage: test
+#   tags:
+#     - server
 
 docker-build-code-server:
   stage: build

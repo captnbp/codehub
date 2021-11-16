@@ -21,7 +21,7 @@ chmod +x /usr/local/bin/kubectl
 
 echo "Install helm"
 latest_release_url="https://github.com/helm/helm/releases"
-TAG=$(curl -Ls $latest_release_url | grep 'href="/helm/helm/releases/tag/v3.' | grep -v beta | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
+TAG=$(curl -Ls $latest_release_url | grep 'href="/helm/helm/releases/tag/v3.' | grep -v beta | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
 curl ${CURL_OPTS} -L "https://get.helm.sh/helm-$TAG-linux-amd64.tar.gz" \
     -o /tmp/helm.tar.gz >/dev/null
 tar zxf /tmp/helm.tar.gz -C /tmp/ >/dev/null
