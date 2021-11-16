@@ -334,8 +334,8 @@ helm_lint:
   stage: test
   image: captnbp/gitlab-ci-image:latest
   script:
-    - helm dependency update code-server-hub
-    - helm lint code-server-hub --set proxy.secretToken=`openssl rand -hex 32`
+    - helm dependency update codehub
+    - helm lint codehub --set proxy.secretToken=`openssl rand -hex 32`
   tags:
     - server
 
