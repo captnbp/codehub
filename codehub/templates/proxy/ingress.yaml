@@ -51,7 +51,7 @@ spec:
   tls:
     {{- if and .Values.proxy.ingress.tls (or (include "jupyterhub.ingress.certManagerRequest" .Values.proxy.ingress.annotations) .Values.proxy.ingress.selfSigned) }}
     - hosts:
-        - {{ .Values.proxy.ingress.hostname }}
+        - {{ .Values.proxy.ingress.hostname | quote }}
       secretName: {{ printf "%s-tls" .Values.proxy.ingress.hostname }}
     {{- end }}
     {{- if .Values.proxy.ingress.extraTls }}

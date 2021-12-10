@@ -1,6 +1,8 @@
-*************************************************************************
-*** PLEASE BE PATIENT: JupyterHub may take a few minutes to install   ***
-*************************************************************************
+CHART NAME: {{ .Chart.Name }}
+CHART VERSION: {{ .Chart.Version }}
+APP VERSION: {{ .Chart.AppVersion }}
+
+** Please be patient while the chart is being deployed **
 
 {{- if .Values.proxy.ingress.enabled }}
 
@@ -46,12 +48,13 @@
 {{- include "common.warnings.rollingTag" .Values.hub.image }}
 {{- include "common.warnings.rollingTag" .Values.proxy.image }}
 {{- include "common.warnings.rollingTag" .Values.singleuser.image }}
+{{- include "common.warnings.rollingTag" .Values.auxiliaryImage }}
 
 {{- $passwordValidationErrors := list -}}
 
-{{- if and (not .Values.hub.existingSecret) .Values.hub.auth.dummy.enabled -}}
+{{- if not .Values.hub.existingSecret -}}
     {{- $secretName := printf "%s-hub" (include "common.names.fullname" .) -}}
-    {{- $requiredHubPassword := dict "valueKey" "hub.auth.dummy.password" "secret" $secretName "field" "values.yaml" "context" $ -}}
+    {{- $requiredHubPassword := dict "valueKey" "hub.password" "secret" $secretName "field" "values.yaml" "context" $ -}}
     {{- $requiredHubPasswordError := include "common.validations.values.single.empty" $requiredHubPassword -}}
     {{- $passwordValidationErrors = append $passwordValidationErrors $requiredHubPasswordError -}}
 {{- end }}
