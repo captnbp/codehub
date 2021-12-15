@@ -103,6 +103,14 @@ curl ${CURL_OPTS} -L "https://dl.min.io/client/mc/release/linux-amd64/mc" \
     -o /usr/local/bin/mc >/dev/null
 chmod 755 /usr/local/bin/mc
 
+echo "Install Restic cli"
+latest_release_url="https://github.com/restic/restic/releases/"
+TAG=$(curl -Ls $latest_release_url | grep 'href="/restic/restic/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+wget "https://github.com/restic/restic/releases/download/v${TAG}/restic_${TAG}_linux_amd64.bz2" -O /tmp/restic.bz2 >/dev/null
+bzip2 -d /tmp/restic.bz2
+mv /tmp/restic /usr/local/bin/restic
+chmod 755 /usr/local/bin/restic
+
 echo "Install Hadolint"
 latest_release_url="https://github.com/hadolint/hadolint/releases"
 TAG=$(curl -Ls $latest_release_url | grep 'href="/hadolint/hadolint/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
