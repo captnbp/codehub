@@ -62,6 +62,3 @@ APP VERSION: {{ .Chart.AppVersion }}
 {{- $postgresqlSecretName := include "jupyterhub.databaseSecretName" . -}}
 {{- $postgresqlPasswordValidationErrors := include "common.validations.values.postgresql.passwords" (dict "secret" $postgresqlSecretName "subchart" true "context" $) -}}
 {{- $passwordValidationErrors = append $passwordValidationErrors $postgresqlPasswordValidationErrors -}}
-
-{{- include "common.errors.upgrade.passwords.empty" (dict "validationErrors" $passwordValidationErrors "context" $) -}}
-{{- include "jupyterhub.validateValues" . }}
