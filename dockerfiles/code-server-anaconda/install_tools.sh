@@ -44,7 +44,7 @@ echo "autoload -U +X bashcompinit && bashcompinit" >> /etc/zsh/zshrc
 echo "complete -o nospace -C /usr/local/bin/vault vault" >> /etc/zsh/zshrc
 
 conda install -c rapidsai -c nvidia -c numba -c conda-forge cudf
-conda install pylint
+conda install pylint ipykernel
 
 echo "Cleaning"
 rm -rf /var/lib/apt/lists/* /tmp/*

@@ -12,7 +12,9 @@ echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main |
 apt-get update >/dev/null
 apt-get dist-upgrade -y
 apt-get install --no-install-recommends -y vim pwgen jq unzip pass zsh fonts-powerline \
-    htop software-properties-common gpg netcat uuid-runtime dnsutils exa skopeo bzip2 trivy
+    htop software-properties-common gpg netcat uuid-runtime dnsutils exa fd-find skopeo bzip2 trivy
+
+ln -s $(which fdfind) /usr/local/bin/fd
 
 echo "Install Oh My Zsh"
 sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -96,6 +98,40 @@ mv -f /tmp/havener /usr/local/bin/havener
 chown 755 /usr/local/bin/havener
 rm /tmp/havener.tar.gz
 
+echo "Install kubectx and kubens"
+latest_release_url="https://github.com/ahmetb/kubectx/releases"
+TAG=$(curl -Ls $latest_release_url | grep 'href="/ahmetb/kubectx/releases/tag/v' | grep -v beta  | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+curl ${CURL_OPTS} -L "https://github.com/ahmetb/kubectx/releases/download/v${TAG}/kubectx_v${TAG}_linux_x86_64.tar.gz" \
+    -o /tmp/kubectx.tar.gz >/dev/null
+tar zxf /tmp/kubectx.tar.gz -C /tmp/ >/dev/null
+mv -f /tmp/kubectx /usr/local/bin/kubectx
+chown 755 /usr/local/bin/kubectx
+rm /tmp/kubectx.tar.gz
+curl ${CURL_OPTS} -L "https://github.com/ahmetb/kubectx/releases/download/v${TAG}/kubens_v${TAG}_linux_x86_64.tar.gz" \
+    -o /tmp/kubens.tar.gz >/dev/null
+tar zxf /tmp/kubens.tar.gz -C /tmp/ >/dev/null
+mv -f /tmp/kubens /usr/local/bin/kubens
+chown 755 /usr/local/bin/kubens
+rm /tmp/kubens.tar.gz
+
+# echo "Install dog"
+# latest_release_url="https://github.com/ogham/dog/releases"
+# TAG=$(curl -Ls $latest_release_url | grep 'href="/ogham/dog/releases/tag/v' | grep -v beta  | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+# curl ${CURL_OPTS} -L "https://github.com/ogham/dog/releases/download/v${TAG}/dog-v${TAG}-x86_64-unknown-linux-gnu.zip" \
+#     -o /tmp/dog.zip >/dev/null
+# unzip /tmp/dog.zip -d /tmp/ >/dev/null
+# mv -f /tmp/bin/dog /usr/local/bin/dog
+# chown 755 /usr/local/bin/dog
+# rm /tmp/dog.zip
+
+echo "Install duf"
+latest_release_url="https://github.com/muesli/duf/releases"
+TAG=$(curl -Ls $latest_release_url | grep 'href="/muesli/duf/releases/tag/v' | grep -v beta  | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
+curl ${CURL_OPTS} -L "https://github.com/muesli/duf/releases/download/v${TAG}/kubectx_${TAG}_linux_amd64.deb" \
+    -o /tmp/duf.deb >/dev/null
+dpkg -i /tmp/duf.deb
+rm /tmp/duf.deb
+
 echo "Install Scaleway scw cli"
 latest_release_url="https://github.com/scaleway/scaleway-cli/releases/"
 TAG=$(curl -Ls $latest_release_url | grep 'href="/scaleway/scaleway-cli/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
@@ -136,7 +172,7 @@ chsh -s /usr/bin/zsh coder
 
 echo "mkdir -p \$HOME/.oh-my-zsh/cache" >> /etc/zsh/zshrc
 echo "export ZSH_CACHE_DIR=\$HOME/.oh-my-zsh/cache" >> /etc/zsh/zshrc
-echo "plugins=(git docker ansible helm kubectl terraform)" >> /etc/zsh/zshrc
+echo "plugins=(git kubectl docker ansible helm sudo pass kubectx kube-ps1 terraform fd)" >> /etc/zsh/zshrc
 echo "ZSH_THEME=robbyrussell" >> /etc/zsh/zshrc
 echo "export ZSH=/usr/share/oh-my-zsh" >> /etc/zsh/zshrc
 echo "source \$ZSH/oh-my-zsh.sh" >> /etc/zsh/zshrc
@@ -144,11 +180,14 @@ echo "autoload -U +X bashcompinit && bashcompinit" >> /etc/zsh/zshrc
 echo "complete -o nospace -C /usr/local/bin/packer packer" >> /etc/zsh/zshrc
 echo "complete -o nospace -C /usr/local/bin/terraform terraform" >> /etc/zsh/zshrc
 echo "complete -o nospace -C /usr/local/bin/vault vault" >> /etc/zsh/zshrc
+echo "eval \"\$(scw autocomplete script shell=zsh)\"" >> /etc/zsh/zshrc
+echo "PROMPT='\$(kube_ps1)'\$PROMPT" >> /etc/zsh/zshrc
+echo "export PATH=\$HOME/bin:\$HOME/.local/bin:\$PATH" >> /etc/zsh/zshrc
 
 echo "Install Ansible and ansible-modules-hashivault"
 apt-get install -y --no-install-recommends python3-pip python3-setuptools python3-ldap python3-docker twine python3-psycopg2 postgresql-client
 pip3 install --no-cache-dir --upgrade pip
-pip3 install --no-cache-dir ansible ansible-modules-hashivault openshift passlib hvac elasticsearch virtualenv twine
+pip3 install --no-cache-dir ansible ansible-modules-hashivault openshift passlib hvac elasticsearch virtualenv twine ipykernel checkov
 
 echo "Cleaning"
 rm -rf /var/lib/apt/lists/* /tmp/*
