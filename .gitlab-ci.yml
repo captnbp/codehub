@@ -389,12 +389,12 @@ helm_package:
       else
         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
       fi
-    - helm package code-server-hub
-    - export CHART=$(ls code-server-hub-*.tgz)
+    - helm package codehub
+    - export CHART=$(ls codehub-*.tgz)
     - curl -u ${BASIC_AUTH_USER}:${BASIC_AUTH_PASS} --data-binary "@${CHART}" https://charts.doca.cloud/api/charts
   artifacts:
     paths:
-      - code-server-hub-*.tgz
+      - codehub-*.tgz
     expire_in: 30 days
   tags:
     - server
