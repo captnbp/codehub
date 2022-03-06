@@ -187,7 +187,7 @@ echo "export PATH=\$HOME/bin:\$HOME/.local/bin:\$PATH" >> /etc/zsh/zshrc
 echo "Install Ansible and ansible-modules-hashivault"
 apt-get install -y --no-install-recommends python3-pip python3-setuptools python3-ldap python3-docker twine python3-psycopg2 postgresql-client
 pip3 install --no-cache-dir --upgrade pip
-pip3 install --no-cache-dir ansible ansible-modules-hashivault openshift passlib hvac elasticsearch virtualenv twine ipykernel checkov
+pip3 install --no-cache-dir ansible ansible-modules-hashivault openshift passlib hvac elasticsearch virtualenv twine ipykernel checkov opensearch-py
 
 echo "Cleaning"
 rm -rf /var/lib/apt/lists/* /tmp/*
