@@ -127,7 +127,7 @@ rm /tmp/kubens.tar.gz
 echo "Install duf"
 latest_release_url="https://github.com/muesli/duf/releases"
 TAG=$(curl -Ls $latest_release_url | grep 'href="/muesli/duf/releases/tag/v' | grep -v beta  | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
-curl ${CURL_OPTS} -L "https://github.com/muesli/duf/releases/download/v${TAG}/kubectx_${TAG}_linux_amd64.deb" \
+curl ${CURL_OPTS} -L "https://github.com/muesli/duf/releases/download/v${TAG}/duf_${TAG}_linux_amd64.deb" \
     -o /tmp/duf.deb >/dev/null
 dpkg -i /tmp/duf.deb
 rm /tmp/duf.deb
