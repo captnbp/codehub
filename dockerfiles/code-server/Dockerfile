@@ -15,6 +15,7 @@ RUN apt-get update \
     sudo \
     vim.tiny \
     lsb-release \
+    iproute2 \
   && rm -rf /var/lib/apt/lists/*
 
 # https://wiki.debian.org/Locale#Manually
