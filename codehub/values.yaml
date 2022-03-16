@@ -132,6 +132,7 @@ hub:
     ## @param hub.auth.gitlab.allowedProjectIds Gitlab allowed project IDs for Hub Gitlab authenticator
     ## @param hub.auth.gitlab.clientId Client ID for Hub Gitlab authenticator
     ## @param hub.auth.gitlab.clientSecret Client Secret for Hub Gitlab authenticator
+    ## @param hub.auth.gitlab.adminUsers Hub authenticator admin Users
     ##
     gitlab:
       enabled: true
@@ -140,6 +141,7 @@ hub:
       allowedProjectIds: "[]"
       clientId: ""
       clientSecret: ""
+      adminUsers: []
 
   ## Configuration file passed to the hub. This will be used by the jupyterhub_config.py file
   ## This configuration uses the values for the `singleuser` section. In the upstream chart the
@@ -209,7 +211,11 @@ hub:
             claim_groups_key: {{ .Values.hub.auth.oauth.claimGroupsKey }}
             {{- end }}
           {{- end }}
-          {{- if .Values.hub.auth.dummy.enabled}}
+          {{- if and .Values.hub.auth.gitlab.enabled .Values.hub.auth.gitlab.adminUsers }}
+          Authenticator:
+            admin_users: {{- .Values.hub.auth.gitlab.adminUsers | toYaml | nindent 10 }}
+          {{- end }}
+          {{- if .Values.hub.auth.dummy.enabled }}
           Authenticator:
             admin_users:
               - {{ .Values.hub.auth.dummy.adminUser }}
@@ -280,6 +286,12 @@ hub:
       {{- end }}
       {{- if .Values.singleuser.podSecurityContext.enabled }}
       fsGid: {{ .Values.singleuser.podSecurityContext.fsGroup }}
+      {{- end }}
+      {{- if and .Values.singleuser.containerSecurityContext.privileged .Values.singleuser.containerSecurityContext.enabled }}
+      privileged: {{ .Values.singleuser.containerSecurityContext.privileged }}
+      {{- end }}
+      {{- if .Values.singleuser.containerSecurityContext.enabled }}
+      allow_privilege_escalation: {{ .Values.singleuser.containerSecurityContext.allowPrivilegeEscalation }}
       {{- end }}
 
 
@@ -1499,10 +1511,15 @@ singleuser:
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param singleuser.containerSecurityContext.enabled Enabled Single User containers' Security Context
   ## @param singleuser.containerSecurityContext.runAsUser Set Single User container's Security Context runAsUser
+  ## @param singleuser.containerSecurityContext.privileged Set Single User container's Security Context privileged flag
+  ## @param singleuser.containerSecurityContext.allowPrivilegeEscalation Set Single User container's Security Context allowPrivilegeEscalation flag
   ##
   containerSecurityContext:
     enabled: true
     runAsUser: 1001
+    privileged: false
+    allowPrivilegeEscalation: false
+
   ## singleuser pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param singleuser.podSecurityContext.enabled Enabled Single User pods' Security Context
