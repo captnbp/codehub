@@ -152,6 +152,7 @@ data:
         ("uid", None),
         ("fs_gid", None),
         ("privileged", "privileged"),
+        ("container_security_context", "container_security_context"),
         ("allow_privilege_escalation", "allow_privilege_escalation"),
         ("service_account", "serviceAccountName"),
         ("storage_extra_labels", "storage.extraLabels"),

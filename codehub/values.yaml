@@ -282,18 +282,11 @@ hub:
       extraContainers: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.sidecars "context" $ ) | nindent 4 }}
       {{- end }}
       {{- if .Values.singleuser.containerSecurityContext.enabled }}
-      uid: {{ .Values.singleuser.containerSecurityContext.runAsUser }}
+      container_security_context: {{- omit .Values.singleuser.containerSecurityContext "enabled" | toYaml | nindent 4 }}
       {{- end }}
-      {{- if .Values.singleuser.podSecurityContext.enabled }}
+      {{- if and .Values.singleuser.podSecurityContext.enabled .Values.singleuser.podSecurityContext.fsGroup }}
       fsGid: {{ .Values.singleuser.podSecurityContext.fsGroup }}
       {{- end }}
-      {{- if and .Values.singleuser.containerSecurityContext.privileged .Values.singleuser.containerSecurityContext.enabled }}
-      privileged: {{ .Values.singleuser.containerSecurityContext.privileged }}
-      {{- end }}
-      {{- if .Values.singleuser.containerSecurityContext.enabled }}
-      allow_privilege_escalation: {{ .Values.singleuser.containerSecurityContext.allowPrivilegeEscalation }}
-      {{- end }}
-
 
       serviceAccountName: {{ template "jupyterhub.singleuserServiceAccountName" . }}
       storage:
