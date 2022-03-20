@@ -12,7 +12,7 @@ echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main |
 apt-get update >/dev/null
 apt-get dist-upgrade -y
 apt-get install --no-install-recommends -y vim pwgen jq unzip pass zsh fonts-powerline \
-    htop software-properties-common gpg netcat uuid-runtime dnsutils exa fd-find skopeo bzip2 trivy
+    htop software-properties-common gpg netcat uuid-runtime dnsutils exa fd-find skopeo bzip2 trivy iproute2
 
 ln -s $(which fdfind) /usr/local/bin/fd
 
@@ -188,6 +188,10 @@ echo "Install Ansible and ansible-modules-hashivault"
 apt-get install -y --no-install-recommends python3-pip python3-setuptools python3-ldap python3-docker twine python3-psycopg2 postgresql-client
 pip3 install --no-cache-dir --upgrade pip
 pip3 install --no-cache-dir ansible ansible-modules-hashivault openshift passlib hvac elasticsearch virtualenv twine ipykernel checkov opensearch-py
+
+echo "Install NodeJS and NPM"
+curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+apt-get install -y nodejs
 
 echo "Cleaning"
 rm -rf /var/lib/apt/lists/* /tmp/*
