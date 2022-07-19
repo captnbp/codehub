@@ -151,6 +151,7 @@ data:
         ("extra_annotations", None),
         ("uid", None),
         ("fs_gid", None),
+        ("run_privileged", None),
         ("privileged", "privileged"),
         ("container_security_context", "container_security_context"),
         ("allow_privilege_escalation", "allow_privilege_escalation"),

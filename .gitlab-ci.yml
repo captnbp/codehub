@@ -58,28 +58,28 @@ docker-build-code-server:
     - changes:
       - dockerfiles/code-server
 
-docker-build-code-server-anaconda:
-  stage: build
-  image:
-    name: gcr.io/kaniko-project/executor:debug
-    entrypoint: [""]
-  script:
-    - |
-      if [[ -z "$CI_COMMIT_TAG" ]]; then
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-code-server-anaconda
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-      else
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/code-server-anaconda
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-      fi
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    #- /kaniko/executor --context $CI_PROJECT_DIR/dockerfiles/code-server-anaconda --dockerfile Dockerfile --destination $CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG
-  tags:
-    - server
-  rules:
-    - if: $CI_COMMIT_TAG
-    - changes:
-      - dockerfiles/code-server-anaconda
+# docker-build-code-server-anaconda:
+#   stage: build
+#   image:
+#     name: gcr.io/kaniko-project/executor:debug
+#     entrypoint: [""]
+#   script:
+#     - |
+#       if [[ -z "$CI_COMMIT_TAG" ]]; then
+#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-code-server-anaconda
+#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
+#       else
+#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/code-server-anaconda
+#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
+#       fi
+#     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+#     #- /kaniko/executor --context $CI_PROJECT_DIR/dockerfiles/code-server-anaconda --dockerfile Dockerfile --destination $CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG
+#   tags:
+#     - server
+#   rules:
+#     - if: $CI_COMMIT_TAG
+#     - changes:
+#       - dockerfiles/code-server-anaconda
 
 docker-build-nginx:
   stage: build
@@ -294,41 +294,41 @@ container_scanning_code_server:
     - changes:
       - dockerfiles/code-server
 
-container_scanning_code_server_anaconda:
-  stage: security
-  image: $SECURE_ANALYZERS_PREFIX/klar:$CS_MAJOR_VERSION
-  variables:
-    # By default, use the latest clair vulnerabilities database, however, allow it to be overridden here with a specific image
-    # to enable container scanning to run offline, or to provide a consistent list of vulnerabilities for integration testing purposes
-    CLAIR_DB_IMAGE_TAG: "latest"
-    CLAIR_DB_IMAGE: "$SECURE_ANALYZERS_PREFIX/clair-vulnerabilities-db:$CLAIR_DB_IMAGE_TAG"
-    # Override the GIT_STRATEGY variable in your `.gitlab-ci.yml` file and set it to `fetch` if you want to provide a `clair-whitelist.yml`
-    # file. See https://docs.gitlab.com/ee/user/application_security/container_scanning/index.html#overriding-the-container-scanning-template
-    # for details
-    GIT_STRATEGY: none
-  allow_failure: true
-  services:
-    - name: $CLAIR_DB_IMAGE
-      alias: clair-vulnerabilities-db
-  script:
-    - |
-      if [[ -z "$CI_COMMIT_TAG" ]]; then
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-code-server-anaconda
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-      else
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/code-server-anaconda
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-      fi
-    - /analyzer run
-  artifacts:
-    reports:
-      container_scanning: gl-container-scanning-report.json
-  tags:
-    - server
-  rules:
-    - if: $CI_COMMIT_TAG
-    - changes:
-      - dockerfiles/code-server-anaconda
+# container_scanning_code_server_anaconda:
+#   stage: security
+#   image: $SECURE_ANALYZERS_PREFIX/klar:$CS_MAJOR_VERSION
+#   variables:
+#     # By default, use the latest clair vulnerabilities database, however, allow it to be overridden here with a specific image
+#     # to enable container scanning to run offline, or to provide a consistent list of vulnerabilities for integration testing purposes
+#     CLAIR_DB_IMAGE_TAG: "latest"
+#     CLAIR_DB_IMAGE: "$SECURE_ANALYZERS_PREFIX/clair-vulnerabilities-db:$CLAIR_DB_IMAGE_TAG"
+#     # Override the GIT_STRATEGY variable in your `.gitlab-ci.yml` file and set it to `fetch` if you want to provide a `clair-whitelist.yml`
+#     # file. See https://docs.gitlab.com/ee/user/application_security/container_scanning/index.html#overriding-the-container-scanning-template
+#     # for details
+#     GIT_STRATEGY: none
+#   allow_failure: true
+#   services:
+#     - name: $CLAIR_DB_IMAGE
+#       alias: clair-vulnerabilities-db
+#   script:
+#     - |
+#       if [[ -z "$CI_COMMIT_TAG" ]]; then
+#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-code-server-anaconda
+#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
+#       else
+#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/code-server-anaconda
+#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
+#       fi
+#     - /analyzer run
+#   artifacts:
+#     reports:
+#       container_scanning: gl-container-scanning-report.json
+#   tags:
+#     - server
+#   rules:
+#     - if: $CI_COMMIT_TAG
+#     - changes:
+#       - dockerfiles/code-server-anaconda
 
 helm_lint:
   stage: test
