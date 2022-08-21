@@ -24,6 +24,6 @@ maintainers:
     name: Bitnami
 name: codehub
 sources:
-  - https://github.com/bitnami/bitnami-docker-jupyterhub
+  - https://github.com/bitnami/containers/tree/main/bitnami/jupyterhub
   - https://github.com/jupyterhub/jupyterhub
-version: 1.3.9
+version: 1.3.13
