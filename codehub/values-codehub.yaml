@@ -1440,7 +1440,7 @@ singleuser:
   ##
   sidecars:
     - name: nginx
-      image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.7.0
+      image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.7.4
       resources:
         requests:
           cpu: 100m
@@ -1458,7 +1458,7 @@ singleuser:
           drop:
             - ALL
     - name: oauth
-      image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.7.0
+      image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.7.4
       ports:
         - containerPort: 9095
           name: oauth
@@ -1480,7 +1480,7 @@ singleuser:
           drop:
             - ALL
     # - name: browser
-    #   image: registry.gitlab.com/captnbp/code-server-hub/browser:1.7.0
+    #   image: registry.gitlab.com/captnbp/code-server-hub/browser:1.7.4
     #   ports:
     #     - containerPort: 6080
     #       name: browser
