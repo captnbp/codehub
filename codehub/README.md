@@ -7,12 +7,12 @@ JupyterHub brings the power of notebooks to groups of users. It gives users acce
 [Overview of JupyterHub](https://jupyter.org/hub)
 
 Trademarks: This software listing is packaged by Bitnami. The respective trademarks mentioned in the offering are owned by the respective companies, and use of them does not imply any affiliation or endorsement.
-                           
+
 ## TL;DR
 
 ```console
-$ helm repo add bitnami https://charts.bitnami.com/bitnami
-$ helm install my-release bitnami/jupyterhub
+$ helm repo add my-repo https://charts.bitnami.com/bitnami
+$ helm install my-release my-repo/jupyterhub
 ```
 
 ## Introduction
@@ -36,8 +36,8 @@ Bitnami charts can be used with [Kubeapps](https://kubeapps.dev/) for deployment
 To install the chart with the release name `my-release`:
 
 ```console
-$ helm repo add bitnami https://charts.bitnami.com/bitnami
-$ helm install my-release bitnami/jupyterhub
+$ helm repo add my-repo https://charts.bitnami.com/bitnami
+$ helm install my-release my-repo/jupyterhub
 ```
 
 These commands deploy JupyterHub on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
@@ -87,7 +87,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------- |
 | `hub.image.registry`                        | Hub image registry                                                                                                       | `docker.io`          |
 | `hub.image.repository`                      | Hub image repository                                                                                                     | `bitnami/jupyterhub` |
-| `hub.image.tag`                             | Hub image tag (immutable tags are recommended)                                                                           | `1.5.0-debian-11-r0` |
+| `hub.image.tag`                             | Hub image tag (immutable tags are recommended)                                                                           | `3.0.0-debian-11-r0` |
+| `hub.image.digest`                          | Hub image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag                      | `""`                 |
 | `hub.image.pullPolicy`                      | Hub image pull policy                                                                                                    | `IfNotPresent`       |
 | `hub.image.pullSecrets`                     | Hub image pull secrets                                                                                                   | `[]`                 |
 | `hub.baseUrl`                               | Hub base URL                                                                                                             | `/`                  |
@@ -214,7 +215,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
 | `proxy.image.registry`                        | Proxy image registry                                                                                                     | `docker.io`                       |
 | `proxy.image.repository`                      | Proxy image repository                                                                                                   | `bitnami/configurable-http-proxy` |
-| `proxy.image.tag`                             | Proxy image tag (immutable tags are recommended)                                                                         | `4.5.1-debian-11-r0`              |
+| `proxy.image.tag`                             | Proxy image tag (immutable tags are recommended)                                                                         | `4.5.3-debian-11-r6`              |
+| `proxy.image.digest`                          | Proxy image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag                    | `""`                              |
 | `proxy.image.pullPolicy`                      | Proxy image pull policy                                                                                                  | `IfNotPresent`                    |
 | `proxy.image.pullSecrets`                     | Proxy image pull secrets                                                                                                 | `[]`                              |
 | `proxy.image.debug`                           | Activate verbose output                                                                                                  | `false`                           |
@@ -402,33 +404,35 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Singleuser deployment parameters
 
-| Name                                            | Description                                                                                         | Value                                |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `singleuser.image.registry`                     | Single User image registry                                                                          | `docker.io`                          |
-| `singleuser.image.repository`                   | Single User image repository                                                                        | `bitnami/jupyter-base-notebook`      |
-| `singleuser.image.tag`                          | Single User image tag (immutabe tags are recommended)                                               | `1.5.0-debian-11-r0`                 |
-| `singleuser.image.pullPolicy`                   | Single User image pull policy                                                                       | `IfNotPresent`                       |
-| `singleuser.image.pullSecrets`                  | Single User image pull secrets                                                                      | `[]`                                 |
-| `singleuser.notebookDir`                        | Notebook directory (it will be the same as the PVC volume mount)                                    | `/opt/bitnami/jupyterhub-singleuser` |
-| `singleuser.command`                            | Override Single User default command                                                                | `[]`                                 |
-| `singleuser.extraEnvVars`                       | Add extra environment variables to the Single User container                                        | `[]`                                 |
-| `singleuser.containerPort`                      | Single User container port                                                                          | `8888`                               |
-| `singleuser.resources.limits`                   | The resources limits for the Singleuser containers                                                  | `{}`                                 |
-| `singleuser.resources.requests`                 | The requested resources for the Singleuser containers                                               | `{}`                                 |
-| `singleuser.containerSecurityContext.enabled`   | Enabled Single User containers' Security Context                                                    | `true`                               |
-| `singleuser.containerSecurityContext.runAsUser` | Set Single User container's Security Context runAsUser                                              | `1001`                               |
-| `singleuser.podSecurityContext.enabled`         | Enabled Single User pods' Security Context                                                          | `true`                               |
-| `singleuser.podSecurityContext.fsGroup`         | Set Single User pod's Security Context fsGroup                                                      | `1001`                               |
-| `singleuser.podLabels`                          | Extra labels for Single User pods                                                                   | `{}`                                 |
-| `singleuser.podAnnotations`                     | Annotations for Single User pods                                                                    | `{}`                                 |
-| `singleuser.nodeSelector`                       | Node labels for pod assignment. Evaluated as a template.                                            | `{}`                                 |
-| `singleuser.tolerations`                        | Tolerations for pod assignment. Evaluated as a template.                                            | `[]`                                 |
-| `singleuser.priorityClassName`                  | Single User pod priority class name                                                                 | `""`                                 |
-| `singleuser.lifecycleHooks`                     | Add lifecycle hooks to the Single User deployment to automate configuration before or after startup | `{}`                                 |
-| `singleuser.extraVolumes`                       | Optionally specify extra list of additional volumes for Single User pods                            | `[]`                                 |
-| `singleuser.extraVolumeMounts`                  | Optionally specify extra list of additional volumeMounts for Single User container(s)               | `[]`                                 |
-| `singleuser.initContainers`                     | Add additional init containers to the Single User pods                                              | `[]`                                 |
-| `singleuser.sidecars`                           | Add additional sidecar containers to the Single User pod                                            | `[]`                                 |
+| Name                                            | Description                                                                                                 | Value                                |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `singleuser.image.registry`                     | Single User image registry                                                                                  | `docker.io`                          |
+| `singleuser.image.repository`                   | Single User image repository                                                                                | `bitnami/jupyter-base-notebook`      |
+| `singleuser.image.tag`                          | Single User image tag (immutabe tags are recommended)                                                       | `3.0.0-debian-11-r0`                 |
+| `singleuser.image.digest`                       | Single User image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                                 |
+| `singleuser.image.pullPolicy`                   | Single User image pull policy                                                                               | `IfNotPresent`                       |
+| `singleuser.image.pullSecrets`                  | Single User image pull secrets                                                                              | `[]`                                 |
+| `singleuser.notebookDir`                        | Notebook directory (it will be the same as the PVC volume mount)                                            | `/opt/bitnami/jupyterhub-singleuser` |
+| `singleuser.allowPrivilegeEscalation`           | Controls whether a process can gain more privileges than its parent process                                 | `false`                              |
+| `singleuser.command`                            | Override Single User default command                                                                        | `[]`                                 |
+| `singleuser.extraEnvVars`                       | Extra environment variables that should be set for the user pods                                            | `[]`                                 |
+| `singleuser.containerPort`                      | Single User container port                                                                                  | `8888`                               |
+| `singleuser.resources.limits`                   | The resources limits for the Singleuser containers                                                          | `{}`                                 |
+| `singleuser.resources.requests`                 | The requested resources for the Singleuser containers                                                       | `{}`                                 |
+| `singleuser.containerSecurityContext.enabled`   | Enabled Single User containers' Security Context                                                            | `true`                               |
+| `singleuser.containerSecurityContext.runAsUser` | Set Single User container's Security Context runAsUser                                                      | `1001`                               |
+| `singleuser.podSecurityContext.enabled`         | Enabled Single User pods' Security Context                                                                  | `true`                               |
+| `singleuser.podSecurityContext.fsGroup`         | Set Single User pod's Security Context fsGroup                                                              | `1001`                               |
+| `singleuser.podLabels`                          | Extra labels for Single User pods                                                                           | `{}`                                 |
+| `singleuser.podAnnotations`                     | Annotations for Single User pods                                                                            | `{}`                                 |
+| `singleuser.nodeSelector`                       | Node labels for pod assignment. Evaluated as a template.                                                    | `{}`                                 |
+| `singleuser.tolerations`                        | Tolerations for pod assignment. Evaluated as a template.                                                    | `[]`                                 |
+| `singleuser.priorityClassName`                  | Single User pod priority class name                                                                         | `""`                                 |
+| `singleuser.lifecycleHooks`                     | Add lifecycle hooks to the Single User deployment to automate configuration before or after startup         | `{}`                                 |
+| `singleuser.extraVolumes`                       | Optionally specify extra list of additional volumes for Single User pods                                    | `[]`                                 |
+| `singleuser.extraVolumeMounts`                  | Optionally specify extra list of additional volumeMounts for Single User container(s)                       | `[]`                                 |
+| `singleuser.initContainers`                     | Add additional init containers to the Single User pods                                                      | `[]`                                 |
+| `singleuser.sidecars`                           | Add additional sidecar containers to the Single User pod                                                    | `[]`                                 |
 
 
 ### Single User RBAC parameters
@@ -464,13 +468,14 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Auxiliary image parameters
 
-| Name                         | Description                                         | Value                   |
-| ---------------------------- | --------------------------------------------------- | ----------------------- |
-| `auxiliaryImage.registry`    | Auxiliary image registry                            | `docker.io`             |
-| `auxiliaryImage.repository`  | Auxiliary image repository                          | `bitnami/bitnami-shell` |
-| `auxiliaryImage.tag`         | Auxiliary image tag (immutabe tags are recommended) | `11-debian-11-r0`       |
-| `auxiliaryImage.pullPolicy`  | Auxiliary image pull policy                         | `IfNotPresent`          |
-| `auxiliaryImage.pullSecrets` | Auxiliary image pull secrets                        | `[]`                    |
+| Name                         | Description                                                                                               | Value                   |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `auxiliaryImage.registry`    | Auxiliary image registry                                                                                  | `docker.io`             |
+| `auxiliaryImage.repository`  | Auxiliary image repository                                                                                | `bitnami/bitnami-shell` |
+| `auxiliaryImage.tag`         | Auxiliary image tag (immutabe tags are recommended)                                                       | `11-debian-11-r37`      |
+| `auxiliaryImage.digest`      | Auxiliary image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                    |
+| `auxiliaryImage.pullPolicy`  | Auxiliary image pull policy                                                                               | `IfNotPresent`          |
+| `auxiliaryImage.pullSecrets` | Auxiliary image pull secrets                                                                              | `[]`                    |
 
 
 ### JupyterHub database parameters
@@ -498,7 +503,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 ```console
 $ helm install my-release \
   --set proxy.livenessProbe.successThreshold=5 \
-    bitnami/jupyterhub
+    my-repo/jupyterhub
 ```
 
 The above command sets the `proxy.livenessProbe.successThreshold` to `5`.
@@ -506,7 +511,7 @@ The above command sets the `proxy.livenessProbe.successThreshold` to `5`.
 Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example,
 
 ```bash
-$ helm install my-release -f values.yaml bitnami/jupyterhub
+$ helm install my-release -f values.yaml my-repo/jupyterhub
 ```
 
 ## Configuration and installation details
@@ -574,6 +579,12 @@ There are cases where you may want to deploy extra objects, such a ConfigMap con
 Find more information about how to deal with common errors related to Bitnami's Helm charts in [this troubleshooting guide](https://docs.bitnami.com/general/how-to/troubleshoot-helm-chart-issues).
 
 ## Upgrading
+
+### To 3.0.0
+
+This major updates the PostgreSQL subchart to its newest major, 12.0.0. [Here](https://github.com/bitnami/charts/tree/master/bitnami/postgresql#to-1200) you can find more information about the changes introduced in that version.
+
+### To any previous version
 
 Refer to the [chart documentation for more information about how to upgrade from previous releases](https://docs.bitnami.com/kubernetes/infrastructure/jupyterhub/administration/upgrade/).
 

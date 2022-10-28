@@ -61,13 +61,15 @@ hub:
     ## @param hub.image.registry Hub image registry
     ## @param hub.image.repository Hub image repository
   ## @param hub.image.tag Hub image tag (immutable tags are recommended)
+  ## @param hub.image.digest Hub image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
   ## @param hub.image.pullPolicy Hub image pull policy
   ## @param hub.image.pullSecrets Hub image pull secrets
     ##
   image:
     registry: docker.io
     repository: bitnami/jupyterhub
-    tag: 1.5.0-debian-11-r25
+    tag: 3.0.0-debian-11-r0
+    digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -167,7 +169,6 @@ hub:
           authenticator_class: gitlab
           {{- else if .Values.hub.auth.dummy.enabled }}
           authenticator_class: dummy
-          cookie_secret_file: /tmp/jupyterhub_cookie_secret
           DummyAuthenticator:
           {{- if .Values.hub.auth.dummy.password }}
             password: {{ .Values.hub.auth.dummy.password | quote }}
@@ -175,7 +176,6 @@ hub:
             password: {{ randAlphaNum 10 | quote }}
           {{- end }}
           {{- end }}
-          cookie_secret_file: /tmp/jupyterhub_cookie_secret
 
           {{- if .Values.hub.auth.gitlab.enabled }}
           GitLabOAuthenticator:
@@ -247,6 +247,7 @@ hub:
         image:
           name: {{ include "jupyterhub.hubconfiguration.imageEntry" ( dict "imageRoot" .Values.auxiliaryImage "global" $) }}
           tag: {{ .Values.auxiliaryImage.tag }}
+          digest: {{ .Values.auxiliaryImage.digest }}
           pullPolicy: {{ .Values.auxiliaryImage.pullPolicy }}
           pullSecrets: {{- include "jupyterhub.imagePullSecrets.list" . | nindent 8 }}
       cloudMetadata:
@@ -284,10 +285,9 @@ hub:
       {{- if .Values.singleuser.containerSecurityContext.enabled }}
       container_security_context: {{- omit .Values.singleuser.containerSecurityContext "enabled" | toYaml | nindent 4 }}
       {{- end }}
-      {{- if and .Values.singleuser.podSecurityContext.enabled .Values.singleuser.podSecurityContext.fsGroup }}
+      {{- if .Values.singleuser.podSecurityContext.enabled }}
       fsGid: {{ .Values.singleuser.podSecurityContext.fsGroup }}
       {{- end }}
-
       serviceAccountName: {{ template "jupyterhub.singleuserServiceAccountName" . }}
       storage:
         {{- if .Values.singleuser.persistence.enabled }}
@@ -314,6 +314,7 @@ hub:
       image:
         name: {{ include "jupyterhub.hubconfiguration.imageEntry" ( dict "imageRoot" .Values.singleuser.image "global" $) }}
         tag: {{ .Values.singleuser.image.tag }}
+        digest: {{ .Values.singleuser.image.digest }}
         pullPolicy: {{ .Values.singleuser.image.pullPolicy }}
         pullSecrets: {{- include "jupyterhub.imagePullSecrets.list" . | nindent 8 }}
       startTimeout: 300
@@ -710,7 +711,7 @@ hub:
       ##
       labels: {}
       ## @param hub.metrics.serviceMonitor.selector Prometheus instance selector labels
-      ## ref: https://github.com/bitnami/charts/tree/master/bitnami/prometheus-operator#prometheus-configuration
+      ## ref: https://github.com/bitnami/charts/tree/main/bitnami/prometheus-operator#prometheus-configuration
       ##
       selector: {}
       ## @param hub.metrics.serviceMonitor.relabelings RelabelConfigs to apply to samples before scraping
@@ -732,6 +733,7 @@ proxy:
   ## @param proxy.image.registry Proxy image registry
   ## @param proxy.image.repository Proxy image repository
   ## @param proxy.image.tag Proxy image tag (immutable tags are recommended)
+  ## @param proxy.image.digest Proxy image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
   ## @param proxy.image.pullPolicy Proxy image pull policy
   ## @param proxy.image.pullSecrets Proxy image pull secrets
   ## @param proxy.image.debug Activate verbose output
@@ -739,7 +741,8 @@ proxy:
   image:
     registry: docker.io
     repository: bitnami/configurable-http-proxy
-    tag: 4.5.1-debian-11-r27
+    tag: 4.5.3-debian-11-r6
+    digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1296,7 +1299,7 @@ proxy:
       ##
       labels: {}
       ## @param proxy.metrics.serviceMonitor.selector Prometheus instance selector labels
-      ## ref: https://github.com/bitnami/charts/tree/master/bitnami/prometheus-operator#prometheus-configuration
+      ## ref: https://github.com/bitnami/charts/tree/main/bitnami/prometheus-operator#prometheus-configuration
       ##
       selector: {}
       ## @param proxy.metrics.serviceMonitor.relabelings RelabelConfigs to apply to samples before scraping
@@ -1491,6 +1494,7 @@ imagePuller:
 ## @param singleuser.image.registry Single User image registry
 ## @param singleuser.image.repository Single User image repository
 ## @param singleuser.image.tag Single User image tag (immutabe tags are recommended)
+## @param singleuser.image.digest Single User image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
 ## @param singleuser.image.pullPolicy Single User image pull policy
 ## @param singleuser.image.pullSecrets Single User image pull secrets
 ##
@@ -1498,7 +1502,8 @@ singleuser:
   image:
     registry: docker.io
     repository: bitnami/jupyter-base-notebook
-    tag: 1.5.0-debian-11-r25
+    tag: 3.0.0-debian-11-r0
+    digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1520,11 +1525,8 @@ singleuser:
   ## @param singleuser.command Override Single User default command
   ##
   command: []
-  ## @param singleuser.extraEnvVars Add extra environment variables to the Single User container
-  ## Example:
-  ## extraEnvVars:
-  ##   - name: FOO
-  ##     value: "bar"
+  ## @param singleuser.extraEnvVars Extra environment variables that should be set for the user pods
+  ## ref: https://zero-to-jupyterhub.readthedocs.io/en/latest/resources/reference.html#singleuser-extraenv
   ##
   extraEnvVars: []
   ## @param singleuser.containerPort Single User container port
@@ -1679,13 +1681,15 @@ singleuser:
 ## @param auxiliaryImage.registry Auxiliary image registry
 ## @param auxiliaryImage.repository Auxiliary image repository
 ## @param auxiliaryImage.tag Auxiliary image tag (immutabe tags are recommended)
+## @param auxiliaryImage.digest Auxiliary image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
 ## @param auxiliaryImage.pullPolicy Auxiliary image pull policy
 ## @param auxiliaryImage.pullSecrets Auxiliary image pull secrets
 ##
 auxiliaryImage:
   registry: docker.io
   repository: bitnami/bitnami-shell
-  tag: 11-debian-11-r23
+  tag: 11-debian-11-r37
+  digest: ""
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.
   ## Secrets must be manually created in the namespace.
@@ -1699,7 +1703,7 @@ auxiliaryImage:
 ## @section JupyterHub database parameters
 
 ## PostgreSQL chart configuration
-## ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
+## ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
 ## @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart
 ## @param postgresql.auth.username Name for a custom user to create
 ## @param postgresql.auth.password Password for the custom user to create
