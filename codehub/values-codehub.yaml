@@ -1526,7 +1526,7 @@ singleuser:
   image:
     registry: registry.gitlab.com/
     repository: registry.gitlab.com/code-server-hub/code-server
-    tag: 1.8.2
+    tag: 1.8.3
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1637,7 +1637,7 @@ singleuser:
   ##
   sidecars:
     - name: nginx
-      image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.8.2
+      image: registry.gitlab.com/captnbp/code-server-hub/nginx:1.8.3
       resources:
         requests:
           cpu: 100m
@@ -1655,7 +1655,7 @@ singleuser:
           drop:
             - ALL
     - name: oauth
-      image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.8.2
+      image: registry.gitlab.com/captnbp/code-server-hub/oauth:1.8.3
       ports:
         - containerPort: 9095
           name: oauth
@@ -1677,7 +1677,7 @@ singleuser:
           drop:
             - ALL
     # - name: browser
-    #   image: registry.gitlab.com/captnbp/code-server-hub/browser:1.8.2
+    #   image: registry.gitlab.com/captnbp/code-server-hub/browser:1.8.3
     #   ports:
     #     - containerPort: 6080
     #       name: browser
