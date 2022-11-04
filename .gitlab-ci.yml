@@ -135,3 +135,5 @@ publish:
     - .template:helm:publish
   variables:
     CHART_NAME: codehub
+  rules:
+    - if: $CI_COMMIT_TAG
