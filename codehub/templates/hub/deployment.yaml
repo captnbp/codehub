@@ -1,7 +1,7 @@
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
-  name: {{ include "jupyterhub.hub.name" . }}
+  name: {{ include "codehub.hub.name" . }}
   namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     app.kubernetes.io/component: hub
@@ -39,8 +39,8 @@ spec:
         {{- include "common.tplvalues.render" (dict "value" .Values.hub.podLabels "context" $) | nindent 8 }}
         {{- end }}
     spec:
-      serviceAccountName: {{ template "jupyterhub.hubServiceAccountName" . }}
-      {{- include "jupyterhub.imagePullSecrets" . | nindent 6 }}
+      serviceAccountName: {{ template "codehub.hubServiceAccountName" . }}
+      {{- include "codehub.imagePullSecrets" . | nindent 6 }}
       {{- if .Values.hub.hostAliases }}
       hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.hub.hostAliases "context" $) | nindent 8 }}
       {{- end }}
@@ -112,7 +112,7 @@ spec:
           {{- end }}
           env:
             - name: POSTGRESQL_CLIENT_DATABASE_HOST
-              value: {{ ternary (include "jupyterhub.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled }}
+              value: {{ ternary (include "codehub.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled }}
             - name: POSTGRESQL_CLIENT_DATABASE_NAME
               value: {{ ternary .Values.postgresql.auth.database .Values.externalDatabase.port .Values.postgresql.enabled }}
             - name: POSTGRESQL_CLIENT_DATABASE_PORT_NUMBER
@@ -120,8 +120,8 @@ spec:
             - name: POSTGRESQL_CLIENT_CREATE_DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "jupyterhub.databaseSecretName" . }}
-                  key: {{ include "jupyterhub.databaseSecretKey" . }}
+                  name: {{ include "codehub.databaseSecretName" . }}
+                  key: {{ include "codehub.databaseSecretKey" . }}
             - name: POSTGRESQL_CLIENT_POSTGRES_USER
               value: {{ ternary .Values.postgresql.auth.username .Values.externalDatabase.host .Values.postgresql.enabled | quote }}
         {{- end }}
@@ -130,7 +130,7 @@ spec:
         {{- end }}
       containers:
         - name: hub
-          image: {{ template "jupyterhub.hub.image" . }}
+          image: {{ template "codehub.hub.image" . }}
           imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
           {{- if .Values.hub.lifecycleHooks }}
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.hub.lifecycleHooks "context" $) | nindent 12 }}
@@ -178,13 +178,13 @@ spec:
             - name: CONFIGPROXY_AUTH_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "jupyterhub.hubSecretName" . }}
+                  name: {{ include "codehub.hubSecretName" . }}
                   key: proxy-token
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "jupyterhub.databaseSecretName" . }}
-                  key: {{ include "jupyterhub.databaseSecretKey" . }}
+                  name: {{ include "codehub.databaseSecretName" . }}
+                  key: {{ include "codehub.databaseSecretKey" . }}
             {{- if .Values.hub.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.hub.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
@@ -244,10 +244,10 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: {{ include "jupyterhub.hubConfigmapName" . }}
+            name: {{ include "codehub.hubConfigmapName" . }}
         - name: secret
           secret:
-            secretName: {{ include "jupyterhub.hubSecretName" . }}
+            secretName: {{ include "codehub.hubSecretName" . }}
         {{- if .Values.hub.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.hub.extraVolumes "context" $) | nindent 8 }}
         {{- end }}

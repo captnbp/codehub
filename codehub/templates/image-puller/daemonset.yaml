@@ -30,7 +30,7 @@ spec:
         {{- include "common.tplvalues.render" (dict "value" .Values.imagePuller.podLabels "context" $) | nindent 8 }}
         {{- end }}
     spec:
-      {{- include "jupyterhub.imagePullSecrets" . | nindent 6 }}
+      {{- include "codehub.imagePullSecrets" . | nindent 6 }}
       {{- if .Values.imagePuller.hostAliases }}
       hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.imagePuller.hostAliases "context" $) | nindent 8 }}
       {{- end }}
@@ -81,7 +81,7 @@ spec:
       {{- end }}
       containers:
         - name: pause
-          image: {{ template "jupyterhub.auxiliary.image" . }}
+          image: {{ template "codehub.auxiliary.image" . }}
           imagePullPolicy: {{ .Values.auxiliaryImage.pullPolicy }}
           {{- if .Values.imagePuller.lifecycleHooks }}
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.imagePuller.lifecycleHooks "context" $) | nindent 12 }}

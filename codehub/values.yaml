@@ -68,7 +68,7 @@ hub:
   image:
     registry: docker.io
     repository: bitnami/jupyterhub
-    tag: 3.0.0-debian-11-r0
+    tag: 3.0.0-debian-11-r11
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -129,7 +129,7 @@ hub:
       adminUsers: []
     
     ## @param hub.auth.gitlab.enabled Enable Hub Gitlab authenticator
-    ## @param hub.auth.gitlab.allowedGitlabGroups Gitlab url for Hub Gitlab authenticator
+    ## @param hub.auth.gitlab.gitlabUrl Gitlab url for Hub Gitlab authenticator
     ## @param hub.auth.gitlab.allowedGitlabGroups Gitlab group whitelisted IDs for Hub Gitlab authenticator
     ## @param hub.auth.gitlab.allowedProjectIds Gitlab allowed project IDs for Hub Gitlab authenticator
     ## @param hub.auth.gitlab.clientId Client ID for Hub Gitlab authenticator
@@ -226,7 +226,7 @@ hub:
       activeServerLimit:
       db:
         type: postgres
-        url: postgresql://{{ ternary .Values.postgresql.auth.username .Values.externalDatabase.user .Values.postgresql.enabled }}@{{ ternary (include "jupyterhub.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled }}:{{ ternary "5432" .Values.externalDatabase.port .Values.postgresql.enabled }}/{{ ternary .Values.postgresql.auth.database .Values.externalDatabase.database .Values.postgresql.enabled }}
+        url: postgresql://{{ ternary .Values.postgresql.auth.username .Values.externalDatabase.user .Values.postgresql.enabled }}@{{ ternary (include "codehub.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled }}:{{ ternary "5432" .Values.externalDatabase.port .Values.postgresql.enabled }}/{{ ternary .Values.postgresql.auth.database .Values.externalDatabase.database .Values.postgresql.enabled }}
       services: {}
       allowNamedServers: false
       namedServerLimitPerUser:
@@ -245,11 +245,11 @@ hub:
       {{- end }}
       networkTools:
         image:
-          name: {{ include "jupyterhub.hubconfiguration.imageEntry" ( dict "imageRoot" .Values.auxiliaryImage "global" $) }}
+          name: {{ include "codehub.hubconfiguration.imageEntry" ( dict "imageRoot" .Values.auxiliaryImage "global" $) }}
           tag: {{ .Values.auxiliaryImage.tag }}
           digest: {{ .Values.auxiliaryImage.digest }}
           pullPolicy: {{ .Values.auxiliaryImage.pullPolicy }}
-          pullSecrets: {{- include "jupyterhub.imagePullSecrets.list" . | nindent 8 }}
+          pullSecrets: {{- include "codehub.imagePullSecrets.list" . | nindent 8 }}
       cloudMetadata:
         blockWithIptables: false
       events: true
@@ -288,7 +288,30 @@ hub:
       {{- if .Values.singleuser.podSecurityContext.enabled }}
       fsGid: {{ .Values.singleuser.podSecurityContext.fsGroup }}
       {{- end }}
-      serviceAccountName: {{ template "jupyterhub.singleuserServiceAccountName" . }}
+      profileList:
+        - description: "Code-Server"
+          default: true
+          display_name: "Code-Server"
+          kubespawner_override:
+            cmd:
+              - code-server
+            image: {{ include "codehub.hubconfiguration.imageEntry" ( dict "imageRoot" .Values.singleuser.image "global" $) }}:{{ .Values.singleuser.image.tag }}
+            {{- if .Values.singleuser.initContainers }}
+            init_containers: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.initContainers "context" $ ) | nindent 8 }}
+            {{- end }}
+            {{- if .Values.singleuser.sidecars }}
+            extra_containers: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.sidecars "context" $ ) | nindent 8 }}
+            {{- end }}
+            {{- if .Values.singleuser.containerSecurityContext.enabled }}
+            privileged: {{ .Values.singleuser.containerSecurityContext.privileged }}
+            allow_privilege_escalation: {{ .Values.singleuser.containerSecurityContext.AllowPrivilegeEscalation }}
+            uid: {{ .Values.singleuser.containerSecurityContext.runAsUser }}
+            {{- end }}
+            {{- if .Values.singleuser.podSecurityContext.enabled }}
+            fsGid: {{ .Values.singleuser.podSecurityContext.fsGroup }}
+            {{- end }}
+
+      serviceAccountName: {{ template "codehub.singleuserServiceAccountName" . }}
       storage:
         {{- if .Values.singleuser.persistence.enabled }}
         type: dynamic
@@ -307,16 +330,16 @@ hub:
         capacity: {{ .Values.singleuser.persistence.size }}
         homeMountPath: {{ .Values.singleuser.notebookDir }}
         dynamic:
-          {{ include "jupyterhub.storage.class" (dict "persistence" .Values.singleuser.persistence "global" .Values.global) }}
+          {{ include "codehub.storage.class" (dict "persistence" .Values.singleuser.persistence "global" .Values.global) }}
           pvcNameTemplate: {{ include "common.names.fullname" . }}-claim-{username}{servername}
           volumeNameTemplate: {{ include "common.names.fullname" . }}-volume-{username}{servername}
           storageAccessModes: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.persistence.accessModes "context" $ ) | nindent 8 }}
       image:
-        name: {{ include "jupyterhub.hubconfiguration.imageEntry" ( dict "imageRoot" .Values.singleuser.image "global" $) }}
+        name: {{ include "codehub.hubconfiguration.imageEntry" ( dict "imageRoot" .Values.singleuser.image "global" $) }}
         tag: {{ .Values.singleuser.image.tag }}
         digest: {{ .Values.singleuser.image.digest }}
         pullPolicy: {{ .Values.singleuser.image.pullPolicy }}
-        pullSecrets: {{- include "jupyterhub.imagePullSecrets.list" . | nindent 8 }}
+        pullSecrets: {{- include "codehub.imagePullSecrets.list" . | nindent 8 }}
       startTimeout: 300
       {{- /* We need to replace the Kubernetes memory/cpu terminology (e.g. 10Gi, 10Mi) with one compatible with Python (10G, 10M) */}}
       cpu:
@@ -556,14 +579,6 @@ hub:
   ##         containerPort: 1234
   ##
   sidecars: []
-  ## @param hub.pdb.create Deploy Hub PodDisruptionBudget
-  ## @param hub.pdb.minAvailable Set minimum available hub instances
-  ## @param hub.pdb.maxUnavailable Set maximum available hub instances
-  ##
-  pdb:
-    create: false
-    minAvailable: ""
-    maxUnavailable: ""
 
   ## @section Hub RBAC parameters
 
@@ -610,18 +625,18 @@ hub:
   networkPolicy:
     ## @param hub.networkPolicy.enabled Deploy Hub network policies
     ##
-    enabled: true
+    enabled: false
     ## @param hub.networkPolicy.allowInterspaceAccess Allow communication between pods in different namespaces
     ##
     allowInterspaceAccess: true
     ## @param hub.networkPolicy.extraIngress Add extra ingress rules to the NetworkPolicy
     ##
-    extraIngress:
-      - from:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: prometheus
+    extraIngress: []
+      # - from:
+      #   - namespaceSelector: {}
+      #     podSelector:
+      #       matchLabels:
+      #         app.kubernetes.io/name: prometheus
     ## @param hub.networkPolicy.extraEgress [string] Add extra ingress rules to the NetworkPolicy
     ##
     extraEgress: |
@@ -741,7 +756,7 @@ proxy:
   image:
     registry: docker.io
     repository: bitnami/configurable-http-proxy
-    tag: 4.5.3-debian-11-r6
+    tag: 4.5.3-debian-11-r16
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -977,18 +992,6 @@ proxy:
   ##         containerPort: 1234
   ##
   sidecars: []
-  ## PodDisruptionBudget settings
-  ##
-  pdb:
-    ## @param proxy.pdb.create Deploy Proxy PodDisruptionBudget
-    ##
-    create: false
-    ## @param proxy.pdb.minAvailable Set minimum available proxy instances
-    ##
-    minAvailable: ""
-    ## @param proxy.pdb.maxUnavailable Set maximum available proxy instances
-    ##
-    maxUnavailable: ""
 
   ## @section Proxy Traffic Exposure Parameters
   ##
@@ -1169,7 +1172,7 @@ proxy:
       ## @param proxy.service.public.extraPorts Extra port to expose on Hub service
       ##
       extraPorts: []
-  ## Configure the ingress resource that allows you to access to your JupyterHub instance
+    ## Configure the ingress resource that allows you to access to your JupyterHub instance
   ##
   ingress:
     ## @param proxy.ingress.enabled Set to true to enable ingress record generation
@@ -1188,7 +1191,7 @@ proxy:
     pathType: ImplementationSpecific
     ## @param proxy.ingress.hostname Set ingress rule hostname
     ##
-    hostname: jupyterhub.local
+    hostname: codehub.local
     ## @param proxy.ingress.path Path to the Proxy pod
     ## NOTE: You may need to set this to '/*' in order to use this with ALB ingress controllers
     ##
@@ -1500,13 +1503,13 @@ imagePuller:
 ##
 singleuser:
   image:
-    registry: docker.io
-    repository: bitnami/jupyter-base-notebook
-    tag: 3.0.0-debian-11-r0
+    registry: lab.frogg.it:5050
+    repository: captnbp/codehub/code-server
+    tag: 1.8.4
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
-    ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
     ##
     ##
     pullPolicy: IfNotPresent
@@ -1520,7 +1523,7 @@ singleuser:
     pullSecrets: []
   ## @param singleuser.notebookDir Notebook directory (it will be the same as the PVC volume mount)
   ##
-  notebookDir: /opt/bitnami/jupyterhub-singleuser
+  notebookDir: "/home/coder"
   ## Command for running the container (set to default if not set). Use array form
   ## @param singleuser.command Override Single User default command
   ##
@@ -1546,13 +1549,14 @@ singleuser:
   ## @param singleuser.containerSecurityContext.runAsUser Set Single User container's Security Context runAsUser
   ## @param singleuser.containerSecurityContext.privileged Set Single User container's Security Context privileged flag
   ## @param singleuser.containerSecurityContext.allowPrivilegeEscalation Set Single User container's Security Context allowPrivilegeEscalation flag
+  ## @param singleuser.containerSecurityContext.runAsNonRoot Set Single User container's Security Context runAsNonRoot
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 1001
+    runAsUser: 1000
     privileged: false
     allowPrivilegeEscalation: false
-
+    runAsNonRoot: true
   ## singleuser pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param singleuser.podSecurityContext.enabled Enabled Single User pods' Security Context
@@ -1560,7 +1564,7 @@ singleuser:
   ##
   podSecurityContext:
     enabled: true
-    fsGroup: 1001
+    fsGroup: 1000
   ## @param singleuser.podLabels Extra labels for Single User pods
   ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
   ##
@@ -1601,17 +1605,77 @@ singleuser:
   ##         containerPort: 1234
   ##
   initContainers: []
-  ## @param singleuser.sidecars  Add additional sidecar containers to the Single User pod
-  ## Example:
-  ## sidecars:
-  ##   - name: your-image-name
-  ##     image: your-image
-  ##     imagePullPolicy: Always
-  ##     ports:
-  ##       - name: portname
-  ##         containerPort: 1234
-  ##
-  sidecars: []
+  ## @skip ingleuser.sidecars
+  ## @skip singleuser.sidecars[0]
+  ## @skip singleuser.sidecars[1]
+  sidecars:
+    - name: nginx
+      image: lab.frogg.it:5050/captnbp/codehub/nginx:1.8.4
+      resources:
+        requests:
+          cpu: 100m
+          memory: 50Mi
+        limits:
+          cpu: 100m
+          memory: 100Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsUser: 101
+        runAsGroup: 101
+        privileged: false
+        runAsNonRoot: true
+        capabilities:
+          drop:
+            - ALL
+    - name: oauth
+      image: lab.frogg.it:5050/captnbp/codehub/oauth:1.8.4
+      ports:
+        - containerPort: 9095
+          name: oauth
+          protocol: TCP
+      resources:
+        requests:
+          cpu: 100m
+          memory: 50Mi
+        limits:
+          cpu: 100m
+          memory: 100Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsUser: 33
+        runAsGroup: 33
+        privileged: false
+        runAsNonRoot: true
+        capabilities:
+          drop:
+            - ALL
+    # - name: browser
+    #   image: lab.frogg.it:5050/captnbp/codehub/browser:1.8.4
+    #   ports:
+    #     - containerPort: 6080
+    #       name: browser
+    #       protocol: TCP
+    #   resources:
+    #     requests:
+    #       cpu: 100m
+    #       memory: 200Mi
+    #     limits:
+    #       cpu: 2
+    #       memory: 2Gi
+    #   securityContext:
+    #     allowPrivilegeEscalation: false
+    #     runAsUser: 1000
+    #     runAsGroup: 1000
+    #     privileged: false
+    #     runAsNonRoot: true
+    #     capabilities:
+    #       drop:
+    #         - ALL
+    #   volumeMounts:
+    #     - name: volume-{username}
+    #       mountPath: /home/coder
+    #     - name: shm-volume
+    #       mountPath: /dev/shm
 
   ## @section Single User RBAC parameters
 
@@ -1688,7 +1752,7 @@ singleuser:
 auxiliaryImage:
   registry: docker.io
   repository: bitnami/bitnami-shell
-  tag: 11-debian-11-r37
+  tag: 11-debian-11-r46
   digest: ""
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.
@@ -1708,7 +1772,6 @@ auxiliaryImage:
 ## @param postgresql.auth.username Name for a custom user to create
 ## @param postgresql.auth.password Password for the custom user to create
 ## @param postgresql.auth.database Name for a custom database to create
-## @param postgresql.auth.existingSecret Name of existing secret to use for PostgreSQL credentials
 ## @param postgresql.architecture PostgreSQL architecture (`standalone` or `replication`)
 ## @param postgresql.service.ports.postgresql PostgreSQL service port
 ##
@@ -1718,7 +1781,6 @@ postgresql:
     username: bn_jupyterhub
     password: ""
     database: bitnami_jupyterhub
-  existingSecret: ""
   architecture: standalone
   service:
     ports:

@@ -7,7 +7,7 @@
     - mod N 16 maps to the range 0-15
     - printf "%x" represents a single number 0-15 as a single hex character
 */}}
-{{- define "jupyterhub.randHex" -}}
+{{- define "codehub.randHex" -}}
     {{- $result := "" }}
     {{- range $i := until . }}
         {{- $rand_hex_char := mod (randNumeric 4 | atoi) 16 | printf "%x" }}
@@ -19,32 +19,32 @@
 {{/*
 Return the proper hub image name
 */}}
-{{- define "jupyterhub.hub.image" -}}
+{{- define "codehub.hub.image" -}}
 {{ include "common.images.image" (dict "imageRoot" .Values.hub.image "global" .Values.global) }}
 {{- end -}}
 
 {{/*
 Return the proper hub image name
 */}}
-{{- define "jupyterhub.hub.name" -}}
+{{- define "codehub.hub.name" -}}
 {{- printf "%s-hub" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Return the cookie_secret value
 */}}
-{{- define "jupyterhub.hub.config.JupyterHub.cookie_secret" -}}
+{{- define "codehub.hub.config.JupyterHub.cookie_secret" -}}
     {{ $hubConfiguration := include "common.tplvalues.render" ( dict "value" .Values.hub.configuration "context" $ ) | fromYaml }}
     {{- if ($hubConfiguration | dig "hub" "config" "JupyterHub" "cookie_secret" "") }}
         {{- $hubConfiguration.hub.config.JupyterHub.cookie_secret }}
     {{- else if ($hubConfiguration | dig "hub" "cookieSecret" "") }}
         {{- $hubConfiguration.hub.cookieSecret }}
     {{- else }}
-        {{- $secretData := (lookup "v1" "Secret" $.Release.Namespace ( include "jupyterhub.hub.name" . )).data }}
+        {{- $secretData := (lookup "v1" "Secret" $.Release.Namespace ( include "codehub.hub.name" . )).data }}
         {{- if hasKey $secretData "hub.config.JupyterHub.cookie_secret" }}
             {{- index $secretData "hub.config.JupyterHub.cookie_secret" | b64dec }}
         {{- else }}
-            {{- include "jupyterhub.randHex" 64 }}
+            {{- include "codehub.randHex" 64 }}
         {{- end }}
     {{- end }}
 {{- end }}
@@ -52,16 +52,16 @@ Return the cookie_secret value
 {{/*
 Return the CryptKeeper value
 */}}
-{{- define "jupyterhub.hub.config.CryptKeeper.keys" -}}
+{{- define "codehub.hub.config.CryptKeeper.keys" -}}
     {{ $hubConfiguration := include "common.tplvalues.render" ( dict "value" .Values.hub.configuration "context" $ ) | fromYaml }}
     {{- if ($hubConfiguration | dig "hub" "config" "CryptKeeper" "keys" "") }}
         {{- $hubConfiguration.hub.config.CryptKeeper.keys | join ";" }}
     {{- else }}
-        {{- $secretData := (lookup "v1" "Secret" $.Release.Namespace ( include "jupyterhub.hub.name" . )).data }}
+        {{- $secretData := (lookup "v1" "Secret" $.Release.Namespace ( include "codehub.hub.name" . )).data }}
         {{- if hasKey $secretData "hub.config.CryptKeeper.keys" }}
             {{- index $secretData "hub.config.CryptKeeper.keys" | b64dec }}
         {{- else }}
-            {{- include "jupyterhub.randHex" 64 }}
+            {{- include "codehub.randHex" 64 }}
         {{- end }}
     {{- end }}
 {{- end }}
@@ -69,15 +69,15 @@ Return the CryptKeeper value
 {{/*
 Return the proper hub image name
 */}}
-{{- define "jupyterhub.proxy.name" -}}
+{{- define "codehub.proxy.name" -}}
 {{- printf "%s-proxy" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Return the proper singleuser image name (to be set in the hub.configuration part). We cannot use common.images.image because of the tag
-{{ include "jupyterhub.hubconfiguration.imageEntry" ( dict "imageRoot" .Values.path.to.the.image "global" $) }}
+{{ include "codehub.hubconfiguration.imageEntry" ( dict "imageRoot" .Values.path.to.the.image "global" $) }}
 */}}
-{{- define "jupyterhub.hubconfiguration.imageEntry" -}}
+{{- define "codehub.hubconfiguration.imageEntry" -}}
 {{- $registryName := .imageRoot.registry -}}
 {{- $repositoryName := .imageRoot.repository -}}
 {{- if .global }}
@@ -95,29 +95,29 @@ Return the proper singleuser image name (to be set in the hub.configuration part
 {{/*
 Return the proper hub image name
 */}}
-{{- define "jupyterhub.proxy.image" -}}
+{{- define "codehub.proxy.image" -}}
 {{ include "common.images.image" (dict "imageRoot" .Values.proxy.image "global" .Values.global) }}
 {{- end -}}
 
 {{/*
 Return the proper hub image name
 */}}
-{{- define "jupyterhub.auxiliary.image" -}}
+{{- define "codehub.auxiliary.image" -}}
 {{ include "common.images.image" (dict "imageRoot" .Values.auxiliaryImage "global" .Values.global) }}
 {{- end -}}
 
 {{/*
 Return the proper Docker Image Registry Secret Names
 */}}
-{{- define "jupyterhub.imagePullSecrets" -}}
+{{- define "codehub.imagePullSecrets" -}}
 {{- include "common.images.pullSecrets" (dict "images" (list .Values.hub.image .Values.proxy.image .Values.auxiliaryImage) "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
 Return the proper Docker Image Registry Secret Names
-{{ include "jupyterhub.imagePullSecretsList" ( dict "images" (list .Values.path.to.the.image1, .Values.path.to.the.image2) "global" .Values.global) }}
+{{ include "codehub.imagePullSecretsList" ( dict "images" (list .Values.path.to.the.image1, .Values.path.to.the.image2) "global" .Values.global) }}
 */}}
-{{- define "jupyterhub.imagePullSecretsList" -}}
+{{- define "codehub.imagePullSecretsList" -}}
   {{- $pullSecrets := list }}
 
   {{- if .global }}
@@ -142,14 +142,14 @@ Return the proper Docker Image Registry Secret Names
 {{/*
 Return the proper Docker Image Registry Secret Names list
 */}}
-{{- define "jupyterhub.imagePullSecrets.list" -}}
-{{- include "jupyterhub.imagePullSecretsList" (dict "images" (list .Values.hub.image .Values.proxy.image .Values.auxiliaryImage) "global" .Values.global) -}}
+{{- define "codehub.imagePullSecrets.list" -}}
+{{- include "codehub.imagePullSecretsList" (dict "images" (list .Values.hub.image .Values.proxy.image .Values.auxiliaryImage) "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "jupyterhub.hubServiceAccountName" -}}
+{{- define "codehub.hubServiceAccountName" -}}
 {{- if .Values.hub.serviceAccount.create -}}
     {{ default (printf "%s-hub" (include "common.names.fullname" .)) .Values.hub.serviceAccount.name }}
 {{- else -}}
@@ -160,7 +160,7 @@ Create the name of the service account to use
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "jupyterhub.singleuserServiceAccountName" -}}
+{{- define "codehub.singleuserServiceAccountName" -}}
 {{- if .Values.singleuser.serviceAccount.create -}}
     {{ default (printf "%s-singleuser" (include "common.names.fullname" .)) .Values.singleuser.serviceAccount.name }}
 {{- else -}}
@@ -170,9 +170,9 @@ Create the name of the service account to use
 
 {{/*
 Return  the proper Storage Class (adapted to the Jupyterhub configuration format)
-{{ include "jupyterhub.storage.class" ( dict "persistence" .Values.path.to.the.persistence "global" $) }}
+{{ include "codehub.storage.class" ( dict "persistence" .Values.path.to.the.persistence "global" $) }}
 */}}
-{{- define "jupyterhub.storage.class" -}}
+{{- define "codehub.storage.class" -}}
 
 {{- $storageClass := .persistence.storageClass -}}
 {{- if .global -}}
@@ -195,27 +195,27 @@ Return  the proper Storage Class (adapted to the Jupyterhub configuration format
 Create a default fully qualified postgresql name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
-{{- define "jupyterhub.postgresql.fullname" -}}
+{{- define "codehub.postgresql.fullname" -}}
 {{- include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) -}}
 {{- end -}}
 
 {{/*
 Get the Postgresql credentials secret.
 */}}
-{{- define "jupyterhub.databaseSecretName" -}}
+{{- define "codehub.databaseSecretName" -}}
 {{- if .Values.postgresql.enabled }}
     {{- if .Values.global.postgresql }}
         {{- if .Values.global.postgresql.auth }}
             {{- if .Values.global.postgresql.auth.existingSecret }}
                 {{- tpl .Values.global.postgresql.auth.existingSecret $ -}}
             {{- else -}}
-                {{- default (include "jupyterhub.postgresql.fullname" .) (tpl .Values.postgresql.auth.existingSecret $) -}}
+                {{- default (include "codehub.postgresql.fullname" .) (tpl .Values.postgresql.auth.existingSecret $) -}}
             {{- end -}}
         {{- else -}}
-            {{- default (include "jupyterhub.postgresql.fullname" .) (tpl .Values.postgresql.auth.existingSecret $) -}}
+            {{- default (include "codehub.postgresql.fullname" .) (tpl .Values.postgresql.auth.existingSecret $) -}}
         {{- end -}}
     {{- else -}}
-        {{- default (include "jupyterhub.postgresql.fullname" .) (tpl .Values.postgresql.auth.existingSecret $) -}}
+        {{- default (include "codehub.postgresql.fullname" .) (tpl .Values.postgresql.auth.existingSecret $) -}}
     {{- end -}}
 {{- else -}}
     {{- default (printf "%s-externaldb" .Release.Name) (tpl .Values.externalDatabase.existingSecret $) -}}
@@ -225,7 +225,7 @@ Get the Postgresql credentials secret.
 {{/*
 Add environment variables to configure database values
 */}}
-{{- define "jupyterhub.databaseSecretKey" -}}
+{{- define "codehub.databaseSecretKey" -}}
 {{- if .Values.postgresql.enabled -}}
     {{- print "password" -}}
 {{- else -}}
@@ -244,7 +244,7 @@ Add environment variables to configure database values
 {{/*
 Get the Postgresql credentials secret.
 */}}
-{{- define "jupyterhub.hubSecretName" -}}
+{{- define "codehub.hubSecretName" -}}
 {{- if .Values.hub.existingSecret -}}
     {{- .Values.hub.existingSecret -}}
 {{- else }}
@@ -255,7 +255,7 @@ Get the Postgresql credentials secret.
 {{/*
 Get the Postgresql credentials secret.
 */}}
-{{- define "jupyterhub.hubConfigmapName" -}}
+{{- define "codehub.hubConfigmapName" -}}
 {{- if .Values.hub.existingConfigmap -}}
     {{- .Values.hub.existingConfigmap -}}
 {{- else }}
@@ -264,7 +264,7 @@ Get the Postgresql credentials secret.
 {{- end -}}
 
 {{/* Validate values of JupyterHub - Database */}}
-{{- define "jupyterhub.validateValues.database" -}}
+{{- define "codehub.validateValues.database" -}}
 {{- if and .Values.postgresql.enabled .Values.externalDatabase.host -}}
 jupyherhub: Database
     You can only use one database.
@@ -282,9 +282,9 @@ jupyherhub: NoDatabase
 {{/*
 Compile all warnings into a single message.
 */}}
-{{- define "jupyterhub.validateValues" -}}
+{{- define "codehub.validateValues" -}}
 {{- $messages := list -}}
-{{- $messages := append $messages (include "jupyterhub.validateValues.database" .) -}}
+{{- $messages := append $messages (include "codehub.validateValues.database" .) -}}
 {{- $messages := without $messages "" -}}
 {{- $message := join "\n" $messages -}}
 

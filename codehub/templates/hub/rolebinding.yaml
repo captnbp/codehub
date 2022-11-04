@@ -2,7 +2,7 @@
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ include "jupyterhub.hub.name" . }}
+  name: {{ include "codehub.hub.name" . }}
   namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     app.kubernetes.io/component: hub
@@ -14,7 +14,7 @@ metadata:
   {{- end }}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "jupyterhub.hubServiceAccountName" . }}
+    name: {{ include "codehub.hubServiceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: Role

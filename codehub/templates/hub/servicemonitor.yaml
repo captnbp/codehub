@@ -3,7 +3,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "jupyterhub.hub.name" . }}
+  name: {{ include "codehub.hub.name" . }}
   {{- if .Values.hub.metrics.serviceMonitor.namespace }}
   namespace: {{ .Values.hub.metrics.serviceMonitor.namespace }}
   {{- else }}

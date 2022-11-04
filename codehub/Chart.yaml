@@ -1,7 +1,19 @@
 annotations:
-  category: MachineLearning
+  category: developpment
+  artifacthub.io/images: |
+    - name: code-server
+      image: lab.frogg.it:5050/captnbp/codehub/code-server:1.8.4
+    - name: jupyterhub
+      image: docker.io/bitnami/jupyterhub:3.0.0-debian-11-r11
+    - name: oauth
+      image: lab.frogg.it:5050/captnbp/codehub/oauth:1.8.4
+    - name: nginx
+      image: lab.frogg.it:5050/captnbp/codehub/nginx:1.8.4
+    - name: configurable-http-proxy
+      image: docker.io/bitnami/configurable-http-proxy:4.5.3-debian-11-r16
+  artifacthub.io/license: MIT
 apiVersion: v2
-appVersion: 3.0.0
+appVersion: 4.8.2
 dependencies:
   - condition: postgresql.enabled
     name: postgresql
@@ -12,18 +24,20 @@ dependencies:
     tags:
       - bitnami-common
     version: 2.x.x
-description: JupyterHub brings the power of notebooks to groups of users. It gives users access to computational environments and resources without burdening the users with installation and maintenance tasks.
+description: Codehub brings the power of JupyterHub with Code-Server. It gives users access to computational environments and resources without burdening the users with installation and maintenance tasks.
 engine: gotpl
 home: https://jupyter.org/hub
 icon: https://bitnami.com/assets/stacks/jupyterhub/img/jupyterhub-stack-220x234.png
 keywords:
-  - python
-  - scientific
+  - devops
+  - ide
+  - vscode
 maintainers:
-  - name: Bitnami
-    url: https://github.com/bitnami/charts
+  - name: captnbp
+    url: https://lab.frogg.it/captnbp/codehub
 name: codehub
 sources:
   - https://github.com/bitnami/containers/tree/main/bitnami/jupyterhub
   - https://github.com/jupyterhub/jupyterhub
+  - https://github.com/coder/code-server
 version: 3.0.0

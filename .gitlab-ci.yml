@@ -1,39 +1,36 @@
 ---
-image: alpine:latest
-
-variables:
-  ROLLOUT_RESOURCE_TYPE: deployment
-
-  # Setting this variable will affect all Security templates
-  # (SAST, Dependency Scanning, ...)
-  SECURE_ANALYZERS_PREFIX: "registry.gitlab.com/gitlab-org/security-products/analyzers"
-  CS_MAJOR_VERSION: 2
-  CONTAINER_SCANNING_DISABLED: "False"
-  SCAN_KUBERNETES_MANIFESTS: "true"
+image: captnbp/gitlab-ci-image:latest
 
 stages:
   - test
   - build
-  - security
   - release
 
-include:
-  #- template: Jobs/Code-Quality.gitlab-ci.yml  # https://gitlab.com/gitlab-org/gitlab-foss/blob/master/lib/gitlab/ci/templates/Jobs/Code-Quality.gitlab-ci.yml
-  - template: Security/SAST.gitlab-ci.yml
 
-sast:
-  variables:
-    SAST_DEFAULT_ANALYZERS: kubesec
-    KUBESEC_HELM_CHARTS_PATH: code-server-hub
-    KUBESEC_HELM_OPTIONS: "--set proxy.secretToken=1065c7d75ebf9c0a43395bc121c398472c4c770babeaa1be4236e9d57cd43915"
+.template:helm:lint:
   stage: test
+  script:
+    - cd ${CHART_NAME}
+    - helm dependency update
+    - helm lint .
   tags:
     - server
 
-# code_quality:
-#   stage: test
-#   tags:
-#     - server
+.template:helm:publish:
+  stage: release
+  script:
+    - cd ${CHART_NAME}
+    - helm dependency update
+    - helm plugin install https://github.com/chartmuseum/helm-push
+    - helm plugin install https://github.com/hypnoglow/helm-s3.git
+    - helm package .
+    - export CHART=$(ls ${CHART_NAME}-*.tgz)
+    - helm repo add --username gitlab-ci-token --password ${CI_JOB_TOKEN} gitlab https://${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/helm/${CHART_NAME}
+    - helm repo add charts s3://charts/
+    - helm cm-push ${CHART} gitlab
+    - helm s3 push ${CHART} charts
+  tags:
+    - server
 
 docker-build-code-server:
   stage: build
@@ -127,356 +124,14 @@ docker-build-oauth:
     - changes:
       - dockerfiles/oauth
 
-docker-build-browser:
-  stage: build
-  image:
-    name: gcr.io/kaniko-project/executor:debug
-    entrypoint: [""]
-  script:
-    - |
-      if [[ -z "$CI_COMMIT_TAG" ]]; then
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-browser
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-      else
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/browser
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-      fi
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR/dockerfiles/browser --dockerfile Dockerfile --destination $CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG
-  tags:
-    - server
-  rules:
-    - if: $CI_COMMIT_TAG
-    - changes:
-      - dockerfiles/browser
-
-container_scanning_nginx:
-  stage: security
-  image: $SECURE_ANALYZERS_PREFIX/klar:$CS_MAJOR_VERSION
+lint:
+  extends:
+    - .template:helm:lint
   variables:
-    # By default, use the latest clair vulnerabilities database, however, allow it to be overridden here with a specific image
-    # to enable container scanning to run offline, or to provide a consistent list of vulnerabilities for integration testing purposes
-    CLAIR_DB_IMAGE_TAG: "latest"
-    CLAIR_DB_IMAGE: "$SECURE_ANALYZERS_PREFIX/clair-vulnerabilities-db:$CLAIR_DB_IMAGE_TAG"
-    # Override the GIT_STRATEGY variable in your `.gitlab-ci.yml` file and set it to `fetch` if you want to provide a `clair-whitelist.yml`
-    # file. See https://docs.gitlab.com/ee/user/application_security/container_scanning/index.html#overriding-the-container-scanning-template
-    # for details
-    GIT_STRATEGY: none
-  allow_failure: true
-  services:
-    - name: $CLAIR_DB_IMAGE
-      alias: clair-vulnerabilities-db
-  script:
-    - |
-      if [[ -z "$CI_COMMIT_TAG" ]]; then
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-nginx
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-      else
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/nginx
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-      fi
-    - /analyzer run
-  artifacts:
-    reports:
-      container_scanning: gl-container-scanning-report.json
-  tags:
-    - server
-  rules:
-    - if: $CI_COMMIT_TAG
-    - changes:
-      - dockerfiles/nginx
+    CHART_NAME: codehub
 
-container_scanning_oauth:
-  stage: security
-  image: $SECURE_ANALYZERS_PREFIX/klar:$CS_MAJOR_VERSION
+publish:
+  extends:
+    - .template:helm:publish
   variables:
-    # By default, use the latest clair vulnerabilities database, however, allow it to be overridden here with a specific image
-    # to enable container scanning to run offline, or to provide a consistent list of vulnerabilities for integration testing purposes
-    CLAIR_DB_IMAGE_TAG: "latest"
-    CLAIR_DB_IMAGE: "$SECURE_ANALYZERS_PREFIX/clair-vulnerabilities-db:$CLAIR_DB_IMAGE_TAG"
-    # Override the GIT_STRATEGY variable in your `.gitlab-ci.yml` file and set it to `fetch` if you want to provide a `clair-whitelist.yml`
-    # file. See https://docs.gitlab.com/ee/user/application_security/container_scanning/index.html#overriding-the-container-scanning-template
-    # for details
-    GIT_STRATEGY: none
-  allow_failure: true
-  services:
-    - name: $CLAIR_DB_IMAGE
-      alias: clair-vulnerabilities-db
-  script:
-    - |
-      if [[ -z "$CI_COMMIT_TAG" ]]; then
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-oauth
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-      else
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/oauth
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-      fi
-    - /analyzer run
-  artifacts:
-    reports:
-      container_scanning: gl-container-scanning-report.json
-  tags:
-    - server
-  rules:
-    - if: $CI_COMMIT_TAG
-    - changes:
-      - dockerfiles/oauth
-
-container_scanning_browser:
-  stage: security
-  image: $SECURE_ANALYZERS_PREFIX/klar:$CS_MAJOR_VERSION
-  variables:
-    # By default, use the latest clair vulnerabilities database, however, allow it to be overridden here with a specific image
-    # to enable container scanning to run offline, or to provide a consistent list of vulnerabilities for integration testing purposes
-    CLAIR_DB_IMAGE_TAG: "latest"
-    CLAIR_DB_IMAGE: "$SECURE_ANALYZERS_PREFIX/clair-vulnerabilities-db:$CLAIR_DB_IMAGE_TAG"
-    # Override the GIT_STRATEGY variable in your `.gitlab-ci.yml` file and set it to `fetch` if you want to provide a `clair-whitelist.yml`
-    # file. See https://docs.gitlab.com/ee/user/application_security/container_scanning/index.html#overriding-the-container-scanning-template
-    # for details
-    GIT_STRATEGY: none
-  allow_failure: true
-  services:
-    - name: $CLAIR_DB_IMAGE
-      alias: clair-vulnerabilities-db
-  script:
-    - |
-      if [[ -z "$CI_COMMIT_TAG" ]]; then
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-browser
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-      else
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/browser
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-      fi
-    - /analyzer run
-  artifacts:
-    reports:
-      container_scanning: gl-container-scanning-report.json
-  tags:
-    - server
-  rules:
-    - if: $CI_COMMIT_TAG
-    - changes:
-      - dockerfiles/browser
-
-container_scanning_code_server:
-  stage: security
-  image: $SECURE_ANALYZERS_PREFIX/klar:$CS_MAJOR_VERSION
-  variables:
-    # By default, use the latest clair vulnerabilities database, however, allow it to be overridden here with a specific image
-    # to enable container scanning to run offline, or to provide a consistent list of vulnerabilities for integration testing purposes
-    CLAIR_DB_IMAGE_TAG: "latest"
-    CLAIR_DB_IMAGE: "$SECURE_ANALYZERS_PREFIX/clair-vulnerabilities-db:$CLAIR_DB_IMAGE_TAG"
-    # Override the GIT_STRATEGY variable in your `.gitlab-ci.yml` file and set it to `fetch` if you want to provide a `clair-whitelist.yml`
-    # file. See https://docs.gitlab.com/ee/user/application_security/container_scanning/index.html#overriding-the-container-scanning-template
-    # for details
-    GIT_STRATEGY: none
-  allow_failure: true
-  services:
-    - name: $CLAIR_DB_IMAGE
-      alias: clair-vulnerabilities-db
-  script:
-    - |
-      if [[ -z "$CI_COMMIT_TAG" ]]; then
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-code-server
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-      else
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/code-server
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-      fi
-    - /analyzer run
-  artifacts:
-    reports:
-      container_scanning: gl-container-scanning-report.json
-  tags:
-    - server
-  rules:
-    - if: $CI_COMMIT_TAG
-    - changes:
-      - dockerfiles/code-server
-
-# container_scanning_code_server_anaconda:
-#   stage: security
-#   image: $SECURE_ANALYZERS_PREFIX/klar:$CS_MAJOR_VERSION
-#   variables:
-#     # By default, use the latest clair vulnerabilities database, however, allow it to be overridden here with a specific image
-#     # to enable container scanning to run offline, or to provide a consistent list of vulnerabilities for integration testing purposes
-#     CLAIR_DB_IMAGE_TAG: "latest"
-#     CLAIR_DB_IMAGE: "$SECURE_ANALYZERS_PREFIX/clair-vulnerabilities-db:$CLAIR_DB_IMAGE_TAG"
-#     # Override the GIT_STRATEGY variable in your `.gitlab-ci.yml` file and set it to `fetch` if you want to provide a `clair-whitelist.yml`
-#     # file. See https://docs.gitlab.com/ee/user/application_security/container_scanning/index.html#overriding-the-container-scanning-template
-#     # for details
-#     GIT_STRATEGY: none
-#   allow_failure: true
-#   services:
-#     - name: $CLAIR_DB_IMAGE
-#       alias: clair-vulnerabilities-db
-#   script:
-#     - |
-#       if [[ -z "$CI_COMMIT_TAG" ]]; then
-#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-code-server-anaconda
-#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-#       else
-#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/code-server-anaconda
-#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-#       fi
-#     - /analyzer run
-#   artifacts:
-#     reports:
-#       container_scanning: gl-container-scanning-report.json
-#   tags:
-#     - server
-#   rules:
-#     - if: $CI_COMMIT_TAG
-#     - changes:
-#       - dockerfiles/code-server-anaconda
-
-helm_lint:
-  stage: test
-  image: captnbp/gitlab-ci-image:1.6.19
-  script:
-    - helm dependency update codehub
-    - helm lint codehub --set proxy.secretToken=`openssl rand -hex 32`
-  tags:
-    - server
-
-# hadolint-code-server:
-#   stage: test
-#   image: captnbp/gitlab-ci-image:1.6.19
-#   script:
-#     - hadolint dockerfiles/code-server/Dockerfile
-#   tags:
-#     - server
-
-# hadolint-code-server-anaconda:
-#   stage: test
-#   image: captnbp/gitlab-ci-image:1.6.19
-#   script:
-#     - hadolint dockerfiles/code-server-anaconda/Dockerfile
-#   tags:
-#     - server
-
-# hadolint-oauth:
-#   stage: test
-#   image: captnbp/gitlab-ci-image:1.6.19
-#   script:
-#     - hadolint dockerfiles/oauth/Dockerfile
-#   tags:
-#     - server
-
-hadolint-nginx:
-  stage: test
-  image: captnbp/gitlab-ci-image:1.6.19
-  script:
-    - hadolint dockerfiles/nginx/Dockerfile
-  tags:
-    - server
-
-hadolint-browser:
-  stage: test
-  image: captnbp/gitlab-ci-image:1.6.19
-  script:
-    - hadolint dockerfiles/browser/Dockerfile
-  tags:
-    - server
-
-helm_package:
-  stage: release
-  image: captnbp/gitlab-ci-image:1.6.19
-  script:
-    - |
-      if [[ -z "$CI_COMMIT_TAG" ]]; then
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-      else
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-      fi
-    - helm package codehub
-    - export CHART=$(ls codehub-*.tgz)
-    - curl -u ${BASIC_AUTH_USER}:${BASIC_AUTH_PASS} --data-binary "@${CHART}" https://charts.doca.cloud/api/charts
-  artifacts:
-    paths:
-      - codehub-*.tgz
-    expire_in: 30 days
-  tags:
-    - server
-  rules:
-    - if: $CI_COMMIT_TAG
-
-# deploy_review:
-#   stage: deploy
-#   image: captnbp/gitlab-ci-image:1.6.19
-#   variables:
-#     URL: ${CI_ENVIRONMENT_SLUG}.server.doca.ovh
-#     NAMESPACE: ${KUBE_NAMESPACE}
-#   environment:
-#     name: review/$CI_COMMIT_REF_NAME
-#     url: https://${CI_ENVIRONMENT_SLUG}.k8s.doca.ovh
-#     on_stop: stop_review
-#     auto_stop_in: 1 day
-#   script:
-#     - |
-#       if [[ -z "$CI_COMMIT_TAG" ]]; then
-#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}
-#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-#       else
-#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}
-#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-#       fi
-#     - export JUPYTERHUB_PROXY_TOKEN=$(openssl rand -hex 32)
-#     - envsubst < test/config.yaml > config.yaml
-#     - envsubst < test/namespace.yaml > namespace.yaml
-#     - kubectl apply -f namespace.yaml
-#     - helm upgrade --install ${CI_ENVIRONMENT_SLUG} ./code-server-hub --namespace ${KUBE_NAMESPACE} --values config.yaml
-#   tags:
-#     - server
-#   rules:
-#     - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
-#       when: on_success
-
-# stop_review:
-#   stage: deploy
-#   image: captnbp/gitlab-ci-image:1.6.19
-#   variables:
-#     NAMESPACE: ${KUBE_NAMESPACE}
-#   environment:
-#     name: review/$CI_COMMIT_REF_NAME
-#     action: stop
-#   script:
-#     - echo "Remove review app"
-#     - helm uninstall ${CI_ENVIRONMENT_SLUG} --namespace ${KUBE_NAMESPACE}
-#     - kubectl delete namespace ${KUBE_NAMESPACE}
-#   #when: manual
-#   tags:
-#     - server
-#   rules:
-#     - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
-#       when: on_success
-
-# deploy_prod:
-#   stage: deploy
-#   image: captnbp/gitlab-ci-image:1.6.19
-#   variables:
-#     URL: code-hub.server.doca.ovh
-#     NAMESPACE: code-hub-prod
-#   environment:
-#     name: prod
-#     url: https://code-hub.k8s.doca.ovh
-#   script:
-#     - |
-#       if [[ -z "$CI_COMMIT_TAG" ]]; then
-#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}
-#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-#       else
-#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}
-#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-#       fi
-#     - export JUPYTERHUB_PROXY_TOKEN=$(openssl rand -hex 32)
-#     - envsubst < test/config.yaml > config.yaml
-#     - envsubst < test/namespace.yaml > namespace.yaml
-#     - kubectl apply -f namespace.yaml
-#     - helm upgrade --install ${CI_ENVIRONMENT_SLUG} ./code-server-hub --namespace ${NAMESPACE} --values config.yaml
-#   tags:
-#     - server
-#   rules:
-#     - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master" && $CI_MERGE_REQUEST_EVENT_TYPE == "merged_result"'
-#       when: manual
-...
+    CHART_NAME: codehub
