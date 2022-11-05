@@ -1,4 +1,4 @@
-FROM    nginxinc/nginx-unprivileged:1.21-alpine
+FROM    nginxinc/nginx-unprivileged:1.23-alpine-slim
 
 LABEL maintainer="benoit.pourre@doca-consulting.fr"
 LABEL source="https://gitlab.com/captnbp/code-server-hub"

@@ -1,4 +1,4 @@
-FROM    ubuntu:20.04
+FROM    ubuntu:22.04
 
 LABEL maintainer="benoit.pourre@doca-consulting.fr"
 LABEL source="https://gitlab.com/captnbp/code-server-hub"
