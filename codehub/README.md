@@ -418,7 +418,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------- |
 | `singleuser.image.registry`                                    | Single User image registry                                                                                  | `lab.frogg.it:5050`           |
 | `singleuser.image.repository`                                  | Single User image repository                                                                                | `captnbp/codehub/code-server` |
-| `singleuser.image.tag`                                         | Single User image tag (immutabe tags are recommended)                                                       | `1.8.4`                       |
+| `singleuser.image.tag`                                         | Single User image tag (immutabe tags are recommended)                                                       | `1.8.5`                       |
 | `singleuser.image.digest`                                      | Single User image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                          |
 | `singleuser.image.pullPolicy`                                  | Single User image pull policy                                                                               | `IfNotPresent`                |
 | `singleuser.image.pullSecrets`                                 | Single User image pull secrets                                                                              | `[]`                          |

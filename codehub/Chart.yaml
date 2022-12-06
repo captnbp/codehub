@@ -2,18 +2,18 @@ annotations:
   category: developpment
   artifacthub.io/images: |
     - name: code-server
-      image: lab.frogg.it:5050/captnbp/codehub/code-server:1.8.4
+      image: lab.frogg.it:5050/captnbp/codehub/code-server:1.8.5
     - name: jupyterhub
-      image: docker.io/bitnami/jupyterhub:3.0.0-debian-11-r11
+      image: docker.io/bitnami/jupyterhub:3.0.0-debian-11-r20
     - name: oauth
-      image: lab.frogg.it:5050/captnbp/codehub/oauth:1.8.4
+      image: lab.frogg.it:5050/captnbp/codehub/oauth:1.8.5
     - name: nginx
-      image: lab.frogg.it:5050/captnbp/codehub/nginx:1.8.4
+      image: lab.frogg.it:5050/captnbp/codehub/nginx:1.8.5
     - name: configurable-http-proxy
       image: docker.io/bitnami/configurable-http-proxy:4.5.3-debian-11-r16
   artifacthub.io/license: MIT
 apiVersion: v2
-appVersion: 4.8.2
+appVersion: 4.9.0
 dependencies:
   - condition: postgresql.enabled
     name: postgresql
@@ -40,4 +40,4 @@ sources:
   - https://github.com/bitnami/containers/tree/main/bitnami/jupyterhub
   - https://github.com/jupyterhub/jupyterhub
   - https://github.com/coder/code-server
-version: 3.0.0
+version: 3.0.3
