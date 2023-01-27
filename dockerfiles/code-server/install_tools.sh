@@ -12,7 +12,8 @@ echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main |
 apt-get update >/dev/null
 apt-get dist-upgrade -y
 apt-get install --no-install-recommends -y vim pwgen jq unzip pass zsh fonts-powerline \
-    htop software-properties-common gpg netcat uuid-runtime dnsutils exa fd-find skopeo bzip2 trivy iproute2
+    htop software-properties-common gpg netcat uuid-runtime dnsutils exa fd-find skopeo bzip2 \
+    trivy iproute2 nmap iperf3
 
 ln -s $(which fdfind) /usr/local/bin/fd
 
@@ -166,6 +167,15 @@ curl ${CURL_OPTS} -L "https://github.com/sharkdp/bat/releases/download/v${TAG}/b
 dpkg -i /tmp/bat.deb
 rm /tmp/bat.deb
 
+echo "Install Postgresql client"
+echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | tee -a /etc/apt/sources.list.d/pgdg.list
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+apt-get update >/dev/null
+apt-get install -y postgresql-client
+
+echo "install testssl.sh"
+git clone --depth 1 https://github.com/drwetter/testssl.sh.git /usr/local/testssl.sh
+
 echo "Set shell to zsh"
 chsh -s /usr/bin/zsh
 chsh -s /usr/bin/zsh coder
@@ -182,10 +192,10 @@ echo "complete -o nospace -C /usr/local/bin/terraform terraform" >> /etc/zsh/zsh
 echo "complete -o nospace -C /usr/local/bin/vault vault" >> /etc/zsh/zshrc
 echo "eval \"\$(scw autocomplete script shell=zsh)\"" >> /etc/zsh/zshrc
 echo "PROMPT='\$(kube_ps1)'\$PROMPT" >> /etc/zsh/zshrc
-echo "export PATH=\$HOME/bin:\$HOME/.local/bin:\$PATH" >> /etc/zsh/zshrc
+echo "export PATH=\$HOME/bin:\$HOME/.local/bin:/usr/local/testssl.sh:\$PATH" >> /etc/zsh/zshrc
 
 echo "Install Ansible and ansible-modules-hashivault"
-apt-get install -y --no-install-recommends python3-pip python3-setuptools python3-ldap python3-docker twine python3-psycopg2 postgresql-client
+apt-get install -y --no-install-recommends python3-pip python3-setuptools python3-ldap python3-docker twine python3-psycopg2
 pip3 install --no-cache-dir --upgrade pip
 pip3 install --no-cache-dir ansible ansible-modules-hashivault openshift passlib hvac elasticsearch virtualenv twine ipykernel checkov opensearch-py
 

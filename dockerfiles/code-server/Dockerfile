@@ -33,7 +33,7 @@ RUN ARCH="$(dpkg --print-architecture)" && \
     mkdir -p /etc/fixuid && \
     printf "user: coder\ngroup: coder\n" > /etc/fixuid/config.yml
 
-RUN curl -L https://github.com/cdr/code-server/releases/download/v4.9.0/code-server_4.9.0_$(dpkg --print-architecture).deb -o /tmp/code-server.deb && \
+RUN curl -L https://github.com/cdr/code-server/releases/download/v4.9.1/code-server_4.9.1_$(dpkg --print-architecture).deb -o /tmp/code-server.deb && \
     dpkg -i /tmp/code-server.deb && rm /tmp/code-server.deb
 
 EXPOSE 8080
