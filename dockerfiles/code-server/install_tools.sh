@@ -72,7 +72,7 @@ vault -autocomplete-install
 echo "Install k9s"
 latest_release_url="https://github.com/derailed/k9s/releases"
 TAG=$(curl -Ls $latest_release_url | grep 'href="/derailed/k9s/releases/tag/v' | grep -v beta  | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
-curl ${CURL_OPTS} -L "https://github.com/derailed/k9s/releases/download/${TAG}/k9s_Linux_x86_64.tar.gz" \
+curl ${CURL_OPTS} -L "https://github.com/derailed/k9s/releases/download/${TAG}/k9s_Linux_amd64.tar.gz" \
     -o /tmp/k9s.tar.gz >/dev/null
 tar zxf /tmp/k9s.tar.gz -C /tmp/ >/dev/null
 mv -f /tmp/k9s /usr/local/bin/k9s
