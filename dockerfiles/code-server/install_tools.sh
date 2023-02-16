@@ -37,6 +37,24 @@ chown 755 /usr/local/bin/helm
 rm /tmp/helm.tar.gz
 rm -Rf /tmp/linux-amd64/
 
+echo "Install krew"
+OS="$(uname | tr '[:upper:]' '[:lower:]')"
+ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')"
+KREW="krew-${OS}_${ARCH}"
+curl -L "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" -o /tmp/krew.tar.gz >/dev/null
+tar zxvf "krew.tar.gz" -C /tmp/ >/dev/null
+mv -f /tmp/krew-linux_amd64 /usr/local/bin/krew
+chown 755 /usr/local/bin/krew
+rm /tmp/krew.tar.gz /tmp/LICENSE
+
+echo "Install Gadget"
+TAG=$(curl https://api.github.com/repos/inspektor-gadget/inspektor-gadget/releases/latest | jq -r .tag_name)
+curl -L "https://github.com/inspektor-gadget/inspektor-gadget/releases/download/${TAG}/kubectl-gadget-linux-amd64-${TAG}.tar.gz" -o /tmp/kubectl-gadget.tar.gz >/dev/null
+tar zxf /tmp/kubectl-gadget.tar.gz -C /tmp/ >/dev/null
+mv -f /tmp/kubectl-gadget /usr/local/bin/kubectl-gadget
+chown 755 /usr/local/bin/kubectl-gadget
+rm /tmp/kubectl-gadget.tar.gz /tmp/LICENSE
+
 echo "Install Packer"
 latest_release_url="https://github.com/hashicorp/packer/releases"
 TAG=$(curl -Ls $latest_release_url | grep 'href="/hashicorp/packer/releases/tag/v.' | grep -v beta | grep -v rc | head -n 1 | cut -d '"' -f 6 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}' | cut -d 'v' -f2)
@@ -192,7 +210,7 @@ echo "complete -o nospace -C /usr/local/bin/terraform terraform" >> /etc/zsh/zsh
 echo "complete -o nospace -C /usr/local/bin/vault vault" >> /etc/zsh/zshrc
 echo "eval \"\$(scw autocomplete script shell=zsh)\"" >> /etc/zsh/zshrc
 echo "PROMPT='\$(kube_ps1)'\$PROMPT" >> /etc/zsh/zshrc
-echo "export PATH=\$HOME/bin:\$HOME/.local/bin:/usr/local/testssl.sh:\$PATH" >> /etc/zsh/zshrc
+echo "export PATH=\$HOME/bin:\$HOME/.local/bin:/usr/local/testssl.sh:\${KREW_ROOT:-\$HOME/.krew}/bin:\$PATH" >> /etc/zsh/zshrc
 
 echo "Install Ansible and ansible-modules-hashivault"
 apt-get install -y --no-install-recommends python3-pip python3-setuptools python3-ldap python3-docker twine python3-psycopg2
