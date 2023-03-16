@@ -2,13 +2,13 @@ annotations:
   category: developpment
   artifacthub.io/images: |
     - name: code-server
-      image: lab.frogg.it:5050/captnbp/codehub/code-server:1.8.7
+      image: lab.frogg.it:5050/captnbp/codehub/code-server:1.8.8
     - name: jupyterhub
       image: docker.io/bitnami/jupyterhub:3.1.1-debian-11-r0
     - name: oauth
-      image: lab.frogg.it:5050/captnbp/codehub/oauth:1.8.7
+      image: lab.frogg.it:5050/captnbp/codehub/oauth:1.8.8
     - name: nginx
-      image: lab.frogg.it:5050/captnbp/codehub/nginx:1.8.7
+      image: lab.frogg.it:5050/captnbp/codehub/nginx:1.8.8
     - name: configurable-http-proxy
       image: docker.io/bitnami/configurable-http-proxy:4.5.4-debian-11-r17
   artifacthub.io/license: MIT
