@@ -13,7 +13,7 @@ annotations:
       image: docker.io/bitnami/configurable-http-proxy:4.5.4-debian-11-r29
   artifacthub.io/license: MIT
 apiVersion: v2
-appVersion: 4.12.0
+appVersion: 4.13.0
 dependencies:
   - condition: postgresql.enabled
     name: postgresql
@@ -40,4 +40,4 @@ sources:
   - https://github.com/bitnami/containers/tree/main/bitnami/jupyterhub
   - https://github.com/jupyterhub/jupyterhub
   - https://github.com/coder/code-server
-version: 3.0.11
+version: 3.0.12
