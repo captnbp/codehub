@@ -213,7 +213,7 @@ echo "PROMPT='\$(kube_ps1)'\$PROMPT" >> /etc/zsh/zshrc
 echo "export PATH=\$HOME/bin:\$HOME/.local/bin:/usr/local/testssl.sh:\${KREW_ROOT:-\$HOME/.krew}/bin:\$PATH" >> /etc/zsh/zshrc
 
 echo "Install Ansible and ansible-modules-hashivault"
-apt-get install -y --no-install-recommends python3-pip python3-setuptools python3-ldap python3-docker python3-venv python3-twine python3-psycopg2
+apt-get install -y --no-install-recommends python3-pip python3-setuptools python3-ldap python3-docker python3-venv python3-psycopg2
 pip3 install --no-cache-dir --upgrade pip
 pip3 install --no-cache-dir ansible ansible-modules-hashivault openshift passlib hvac elasticsearch virtualenv ipykernel checkov opensearch-py
 
