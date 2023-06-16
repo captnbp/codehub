@@ -12,7 +12,7 @@ echo deb https://aquasecurity.github.io/trivy-repo/deb buster main | tee -a /etc
 apt-get update >/dev/null
 apt-get dist-upgrade -y
 apt-get install --no-install-recommends -y vim pwgen jq unzip pass zsh fonts-powerline \
-    htop software-properties-common gpg netcat uuid-runtime dnsutils exa fd-find skopeo bzip2 \
+    htop software-properties-common gpg netcat-openbsd uuid-runtime dnsutils exa fd-find skopeo bzip2 \
     trivy iproute2 nmap iperf3
 
 ln -s $(which fdfind) /usr/local/bin/fd
