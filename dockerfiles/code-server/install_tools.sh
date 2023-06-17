@@ -15,6 +15,13 @@ apt-get install --no-install-recommends -y vim pwgen jq unzip pass zsh fonts-pow
     htop software-properties-common gpg netcat-openbsd uuid-runtime dnsutils exa fd-find skopeo bzip2 \
     trivy iproute2 nmap iperf3
 
+echo "Install Ansible and ansible-modules-hashivault"
+# https://www.linuxuprising.com/2023/03/next-debianubuntu-releases-will-likely.html?m=1
+export PIP_BREAK_SYSTEM_PACKAGES=1
+apt-get install -y --no-install-recommends python3-pip python3-setuptools python3-ldap python3-docker python3-venv twine python3-psycopg2
+pip3 install --no-cache-dir ansible ansible-modules-hashivault openshift passlib hvac elasticsearch virtualenv ipykernel checkov opensearch-py
+
+
 ln -s $(which fdfind) /usr/local/bin/fd
 
 echo "Install Oh My Zsh"
@@ -211,11 +218,6 @@ echo "complete -o nospace -C /usr/local/bin/vault vault" >> /etc/zsh/zshrc
 echo "eval \"\$(scw autocomplete script shell=zsh)\"" >> /etc/zsh/zshrc
 echo "PROMPT='\$(kube_ps1)'\$PROMPT" >> /etc/zsh/zshrc
 echo "export PATH=\$HOME/bin:\$HOME/.local/bin:/usr/local/testssl.sh:\${KREW_ROOT:-\$HOME/.krew}/bin:\$PATH" >> /etc/zsh/zshrc
-
-echo "Install Ansible and ansible-modules-hashivault"
-apt-get install -y --no-install-recommends python3-pip python3-setuptools python3-ldap python3-docker python3-venv python3-psycopg2
-pip3 install --no-cache-dir --upgrade pip
-pip3 install --no-cache-dir ansible ansible-modules-hashivault openshift passlib hvac elasticsearch virtualenv ipykernel checkov opensearch-py
 
 echo "Install NodeJS and NPM"
 curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
