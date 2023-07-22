@@ -68,7 +68,7 @@ hub:
   image:
     registry: docker.io
     repository: bitnami/jupyterhub
-    tag: 3.1.1-debian-11-r11
+    tag: 4.0.1-debian-11-r12
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -579,6 +579,14 @@ hub:
   ##         containerPort: 1234
   ##
   sidecars: []
+  ## @param hub.pdb.create Deploy Hub PodDisruptionBudget
+  ## @param hub.pdb.minAvailable Set minimum available hub instances
+  ## @param hub.pdb.maxUnavailable Set maximum available hub instances
+  ##
+  pdb:
+    create: false
+    minAvailable: ""
+    maxUnavailable: ""
 
   ## @section Hub RBAC parameters
 
@@ -757,7 +765,7 @@ proxy:
   image:
     registry: docker.io
     repository: bitnami/configurable-http-proxy
-    tag: 4.5.4-debian-11-r29
+    tag: 4.5.5-debian-11-r33
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -993,6 +1001,39 @@ proxy:
   ##         containerPort: 1234
   ##
   sidecars: []
+  ## PodDisruptionBudget settings
+  ##
+  pdb:
+    ## @param proxy.pdb.create Deploy Proxy PodDisruptionBudget
+    ##
+    create: false
+    ## @param proxy.pdb.minAvailable Set minimum available proxy instances
+    ##
+    minAvailable: ""
+    ## @param proxy.pdb.maxUnavailable Set maximum available proxy instances
+    ##
+    maxUnavailable: ""
+
+  ## @section Proxy RBAC Parameters
+
+  ## ServiceAccount parameters
+  ##
+  serviceAccount:
+    ## @param proxy.serviceAccount.create Specifies whether a ServiceAccount should be created
+    ##
+    create: true
+    ## @param proxy.serviceAccount.name Override Hub service account name
+    ## If not set and create is true, a name is generated using the fullname template
+    ##
+    name: ""
+    ## @param proxy.serviceAccount.automountServiceAccountToken Allows auto mount of ServiceAccountToken on the serviceAccount created
+    ## Can be set to false if pods using this serviceAccount do not need to use K8s API
+    ##
+    automountServiceAccountToken: true
+    ## @param proxy.serviceAccount.annotations Additional custom annotations for the ServiceAccount
+    ##
+    annotations: {}
+
 
   ## @section Proxy Traffic Exposure Parameters
   ##
@@ -1506,7 +1547,7 @@ singleuser:
   image:
     registry: lab.frogg.it:5050
     repository: captnbp/codehub/code-server
-    tag: 1.8.11
+    tag: 1.8.12
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1525,6 +1566,9 @@ singleuser:
   ## @param singleuser.notebookDir Notebook directory (it will be the same as the PVC volume mount)
   ##
   notebookDir: "/home/coder"
+  ## @param singleuser.allowPrivilegeEscalation Controls whether a process can gain more privileges than its parent process
+  ##
+  allowPrivilegeEscalation: false
   ## Command for running the container (set to default if not set). Use array form
   ## @param singleuser.command Override Single User default command
   ##
@@ -1612,7 +1656,7 @@ singleuser:
   ## @skip singleuser.sidecars[1]
   sidecars:
     - name: nginx
-      image: lab.frogg.it:5050/captnbp/codehub/nginx:1.8.11
+      image: lab.frogg.it:5050/captnbp/codehub/nginx:1.8.12
       resources:
         requests:
           cpu: 100m
@@ -1630,7 +1674,7 @@ singleuser:
           drop:
             - ALL
     - name: oauth
-      image: lab.frogg.it:5050/captnbp/codehub/oauth:1.8.11
+      image: lab.frogg.it:5050/captnbp/codehub/oauth:1.8.12
       ports:
         - containerPort: 9095
           name: oauth
@@ -1653,7 +1697,7 @@ singleuser:
           drop:
             - ALL
     # - name: browser
-    #   image: lab.frogg.it:5050/captnbp/codehub/browser:1.8.11
+    #   image: lab.frogg.it:5050/captnbp/codehub/browser:1.8.12
     #   ports:
     #     - containerPort: 6080
     #       name: browser
@@ -1754,8 +1798,8 @@ singleuser:
 ##
 auxiliaryImage:
   registry: docker.io
-  repository: bitnami/bitnami-shell
-  tag: 11-debian-11-r90
+  repository: bitnami/os-shell
+  tag: 11-debian-11-r2
   digest: ""
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.

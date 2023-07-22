@@ -124,7 +124,7 @@ data:
     )
 
     # implement common labels
-    # this duplicates the jupyterhub.commonLabels helper
+    # this duplicates the codehub.commonLabels helper
     common_labels = c.KubeSpawner.common_labels = {}
     common_labels["app"] = get_config(
         "nameOverride",
