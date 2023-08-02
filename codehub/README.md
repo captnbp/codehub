@@ -25,6 +25,59 @@ This chart bootstraps a Codehub Deployment in a [Kubernetes](https://kubernetes.
 - Helm 3.2.0+
 - PV provisioner support in the underlying infrastructure
 
+## Verifying Signed Codehub Images
+
+Codehub images are signed using [Cosign](https://docs.sigstore.dev/cosign/overview/)!
+
+To verify a public image, [install cosign](https://docs.sigstore.dev/cosign/installation/) and use the provided public key:
+
+```bash
+$ cat cosign.pub
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1er+5JMY/P0+R8wiW3HSjGUohoMf
+GEVe7kEAkv1mARM+NyeR5Cd2PpEZnlmNhb2jvyWczfAyj09oA/H47VCQnA==
+-----END PUBLIC KEY-----
+
+$ cosign verify -key ./cosign.pub lab.frogg.it:5050/doca/codehub-container-images/code-server:4.16.1
+```
+
+You can also set the following Kyverno Cluster Policy :
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-codehub-images
+spec:
+  background: false
+  failurePolicy: Fail
+  rules:
+    - match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      name: check-image
+      verifyImages:
+        - attestors:
+            - count: 1
+              entries:
+                - keys:
+                    publicKeys: |-
+                      -----BEGIN PUBLIC KEY-----
+                      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1er+5JMY/P0+R8wiW3HSjGUohoMf
+                      GEVe7kEAkv1mARM+NyeR5Cd2PpEZnlmNhb2jvyWczfAyj09oA/H47VCQnA==
+                      -----END PUBLIC KEY-----
+                    signatureAlgorithm: sha256
+          imageReferences:
+            - lab.frogg.it:5050/doca/*
+            - lab.frogg.it:5050/captnbp/*
+            - registry-1.docker.io/captnbp/*
+          mutateDigest: true
+          required: true
+          verifyDigest: true
+```
+
 ## Installing the Chart
 
 To install the chart with the release name `my-release`:

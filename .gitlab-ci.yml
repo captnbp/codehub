@@ -24,7 +24,7 @@ stages:
     - export CHART=$(ls ${CHART_NAME}-*.tgz)
     - helm registry login lab.frogg.it:5050 --username gitlab-ci-token --password ${CI_JOB_TOKEN} 
     - helm push ${CHART} oci://lab.frogg.it:5050/captnbp/
-    - helm registry login registry-1.docker.io --username ${DOCKER_USERNAME} --password ${DOCKER_PASSWORD} 
+    - helm registry login registry-1.docker.io --username ${DOCKER_USERNAME} --password "${DOCKER_PASSWORD}"
     - helm push ${CHART} oci://registry-1.docker.io/captnbp/
   tags:
     - server

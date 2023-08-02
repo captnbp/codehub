@@ -1547,7 +1547,7 @@ singleuser:
   image:
     registry: lab.frogg.it:5050
     repository: doca/codehub-container-images/code-server
-    tag: 1.8.12
+    tag: 4.16.1
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1656,7 +1656,7 @@ singleuser:
   ## @skip singleuser.sidecars[1]
   sidecars:
     - name: nginx
-      image: lab.frogg.it:5050/doca/codehub-container-images/nginx:1.8.12
+      image: lab.frogg.it:5050/doca/codehub-container-images/nginx:4.16.1
       resources:
         requests:
           cpu: 100m
@@ -1674,7 +1674,7 @@ singleuser:
           drop:
             - ALL
     - name: oauth
-      image: lab.frogg.it:5050/doca/codehub-container-images//oauth:1.8.12
+      image: lab.frogg.it:5050/doca/codehub-container-images//oauth:4.16.1
       ports:
         - containerPort: 9095
           name: oauth
