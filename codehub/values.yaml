@@ -68,7 +68,7 @@ hub:
   image:
     registry: docker.io
     repository: bitnami/jupyterhub
-    tag: 4.0.1-debian-11-r12
+    tag: 4.0.1-debian-11-r46
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -765,7 +765,7 @@ proxy:
   image:
     registry: docker.io
     repository: bitnami/configurable-http-proxy
-    tag: 4.5.5-debian-11-r33
+    tag: 4.5.5-debian-11-r155
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1029,7 +1029,7 @@ proxy:
     ## @param proxy.serviceAccount.automountServiceAccountToken Allows auto mount of ServiceAccountToken on the serviceAccount created
     ## Can be set to false if pods using this serviceAccount do not need to use K8s API
     ##
-    automountServiceAccountToken: true
+    automountServiceAccountToken: false
     ## @param proxy.serviceAccount.annotations Additional custom annotations for the ServiceAccount
     ##
     annotations: {}
@@ -1546,7 +1546,7 @@ imagePuller:
 singleuser:
   image:
     registry: lab.frogg.it:5050
-    repository: captnbp/codehub/code-server
+    repository: doca/codehub-container-images/code-server
     tag: 1.8.12
     digest: ""
     ## Specify a imagePullPolicy
@@ -1656,7 +1656,7 @@ singleuser:
   ## @skip singleuser.sidecars[1]
   sidecars:
     - name: nginx
-      image: lab.frogg.it:5050/captnbp/codehub/nginx:1.8.12
+      image: lab.frogg.it:5050/doca/codehub-container-images/nginx:1.8.12
       resources:
         requests:
           cpu: 100m
@@ -1674,7 +1674,7 @@ singleuser:
           drop:
             - ALL
     - name: oauth
-      image: lab.frogg.it:5050/captnbp/codehub/oauth:1.8.12
+      image: lab.frogg.it:5050/doca/codehub-container-images//oauth:1.8.12
       ports:
         - containerPort: 9095
           name: oauth
@@ -1696,33 +1696,6 @@ singleuser:
         capabilities:
           drop:
             - ALL
-    # - name: browser
-    #   image: lab.frogg.it:5050/captnbp/codehub/browser:1.8.12
-    #   ports:
-    #     - containerPort: 6080
-    #       name: browser
-    #       protocol: TCP
-    #   resources:
-    #     requests:
-    #       cpu: 100m
-    #       memory: 200Mi
-    #     limits:
-    #       cpu: 2
-    #       memory: 2Gi
-    #   securityContext:
-    #     allowPrivilegeEscalation: false
-    #     runAsUser: 1000
-    #     runAsGroup: 1000
-    #     privileged: false
-    #     runAsNonRoot: true
-    #     capabilities:
-    #       drop:
-    #         - ALL
-    #   volumeMounts:
-    #     - name: volume-{username}
-    #       mountPath: /home/coder
-    #     - name: shm-volume
-    #       mountPath: /dev/shm
 
   ## @section Single User RBAC parameters
 
@@ -1799,7 +1772,7 @@ singleuser:
 auxiliaryImage:
   registry: docker.io
   repository: bitnami/os-shell
-  tag: 11-debian-11-r2
+  tag: 11-debian-11-r25
   digest: ""
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.

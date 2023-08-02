@@ -6,7 +6,6 @@ stages:
   - build
   - release
 
-
 .template:helm:lint:
   stage: test
   script:
@@ -21,108 +20,14 @@ stages:
   script:
     - cd ${CHART_NAME}
     - helm dependency update
-    - helm plugin install https://github.com/chartmuseum/helm-push
-    - helm plugin install https://github.com/hypnoglow/helm-s3.git
     - helm package .
     - export CHART=$(ls ${CHART_NAME}-*.tgz)
-    - helm repo add --username gitlab-ci-token --password ${CI_JOB_TOKEN} gitlab https://${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/helm/${CHART_NAME}
-    - helm repo add charts s3://charts/
-    - helm cm-push ${CHART} gitlab
-    - helm s3 push ${CHART} charts
+    - helm registry login lab.frogg.it:5050 --username gitlab-ci-token --password ${CI_JOB_TOKEN} 
+    - helm push ${CHART} oci://lab.frogg.it:5050/captnbp/
+    - helm registry login registry-1.docker.io --username ${DOCKER_USERNAME} --password ${DOCKER_PASSWORD} 
+    - helm push ${CHART} oci://registry-1.docker.io/captnbp/
   tags:
     - server
-
-docker-build-code-server:
-  stage: build
-  image:
-    name: gcr.io/kaniko-project/executor:debug
-    entrypoint: [""]
-  script:
-    - |
-      if [[ -z "$CI_COMMIT_TAG" ]]; then
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-code-server
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-      else
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/code-server
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-      fi
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR/dockerfiles/code-server --dockerfile Dockerfile --destination $CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG
-  tags:
-    - server
-  rules:
-    - if: $CI_COMMIT_TAG
-    - changes:
-      - dockerfiles/code-server
-
-# docker-build-code-server-anaconda:
-#   stage: build
-#   image:
-#     name: gcr.io/kaniko-project/executor:debug
-#     entrypoint: [""]
-#   script:
-#     - |
-#       if [[ -z "$CI_COMMIT_TAG" ]]; then
-#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-code-server-anaconda
-#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-#       else
-#         export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/code-server-anaconda
-#         export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-#       fi
-#     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-#     #- /kaniko/executor --context $CI_PROJECT_DIR/dockerfiles/code-server-anaconda --dockerfile Dockerfile --destination $CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG
-#   tags:
-#     - server
-#   rules:
-#     - if: $CI_COMMIT_TAG
-#     - changes:
-#       - dockerfiles/code-server-anaconda
-
-docker-build-nginx:
-  stage: build
-  image:
-    name: gcr.io/kaniko-project/executor:debug
-    entrypoint: [""]
-  script:
-    - |
-      if [[ -z "$CI_COMMIT_TAG" ]]; then
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-nginx
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-      else
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/nginx
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-      fi
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR/dockerfiles/nginx --dockerfile Dockerfile --destination $CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG
-  tags:
-    - server
-  rules:
-    - if: $CI_COMMIT_TAG
-    - changes:
-      - dockerfiles/nginx
-
-docker-build-oauth:
-  stage: build
-  image:
-    name: gcr.io/kaniko-project/executor:debug
-    entrypoint: [""]
-  script:
-    - |
-      if [[ -z "$CI_COMMIT_TAG" ]]; then
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG}-oauth
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_SHA}
-      else
-        export CI_APPLICATION_REPOSITORY=${CI_APPLICATION_REPOSITORY:-$CI_REGISTRY_IMAGE}/oauth
-        export CI_APPLICATION_TAG=${CI_APPLICATION_TAG:-$CI_COMMIT_TAG}
-      fi
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR/dockerfiles/oauth --dockerfile Dockerfile --destination $CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG
-  tags:
-    - server
-  rules:
-    - if: $CI_COMMIT_TAG
-    - changes:
-      - dockerfiles/oauth
 
 lint:
   extends:

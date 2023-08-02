@@ -12,8 +12,7 @@ Trademarks: This software listing is packaged by Benoît Pourre. The respective 
 ## TL;DR
 
 ```console
-$ helm repo add doca https://charts.doca.cloud/charts
-$ helm install my-release doca/codehub
+$ helm install my-release oci://registry-1.docker.io/captnbp/codehub
 ```
 
 ## Introduction
@@ -31,8 +30,7 @@ This chart bootstraps a Codehub Deployment in a [Kubernetes](https://kubernetes.
 To install the chart with the release name `my-release`:
 
 ```console
-$ helm repo add doca https://charts.doca.cloud/charts
-$ helm install my-release doca/codehub
+$ helm install my-release oci://registry-1.docker.io/captnbp/codehub
 ```
 
 These commands deploy Codehub on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
