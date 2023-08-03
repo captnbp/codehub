@@ -1674,7 +1674,7 @@ singleuser:
           drop:
             - ALL
     - name: oauth
-      image: lab.frogg.it:5050/doca/codehub-container-images//oauth:4.16.1
+      image: lab.frogg.it:5050/doca/codehub-container-images/oauth:4.16.1
       ports:
         - containerPort: 9095
           name: oauth
