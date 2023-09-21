@@ -50,6 +50,8 @@ metadata:
   name: check-codehub-images
 spec:
   background: false
+  validationFailureAction: Enforce
+  webhookTimeoutSeconds: 30
   failurePolicy: Fail
   rules:
     - match:
