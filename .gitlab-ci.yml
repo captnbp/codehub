@@ -26,6 +26,9 @@ stages:
     - helm push ${CHART} oci://lab.frogg.it:5050/captnbp/
     - helm registry login registry-1.docker.io --username ${DOCKER_USERNAME} --password "${DOCKER_PASSWORD}"
     - helm push ${CHART} oci://registry-1.docker.io/captnbp/
+    - helm plugin install https://github.com/hypnoglow/helm-s3.git
+    - helm repo add charts s3://charts/
+    - helm s3 push --force ${CHART} charts
   tags:
     - server
 
