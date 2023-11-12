@@ -24,6 +24,7 @@ spec:
         {{- if .Values.hub.podAnnotations }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.hub.podAnnotations "context" $ ) | nindent 8 }}
         {{- end }}
+        checksum/hub-values: {{ include (print $.Template.BasePath "/hub/configmap-values.yaml") . | sha256sum }}
         {{- if empty .Values.hub.existingConfigmap }}
         checksum/hub-config: {{ include (print $.Template.BasePath "/hub/configmap.yaml") . | sha256sum }}
         {{- end }}
@@ -179,7 +180,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ include "codehub.hubSecretName" . }}
-                  key: proxy-token
+                  key: apiToken
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
@@ -233,6 +234,8 @@ spec:
             - mountPath: /etc/jupyterhub/z2jh.py
               subPath: z2jh.py
               name: config
+            - mountPath: /usr/local/etc/jupyterhub/config/
+              name: values
             - mountPath: /usr/local/etc/jupyterhub/secret/
               name: secret
           {{- if .Values.hub.extraVolumeMounts }}
@@ -242,6 +245,9 @@ spec:
         {{- include "common.tplvalues.render" ( dict "value" .Values.hub.sidecars "context" $) | nindent 8 }}
         {{- end }}
       volumes:
+        - name: values
+          configMap:
+            name: {{ include "codehub.hub.name" . }}-values
         - name: config
           configMap:
             name: {{ include "codehub.hubConfigmapName" . }}

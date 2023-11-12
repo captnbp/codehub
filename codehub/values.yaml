@@ -68,7 +68,7 @@ hub:
   image:
     registry: docker.io
     repository: bitnami/jupyterhub
-    tag: 4.0.2-debian-11-r55
+    tag: 4.0.2-debian-11-r58
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -145,223 +145,6 @@ hub:
       clientSecret: ""
       adminUsers: []
 
-  ## Configuration file passed to the hub. This will be used by the jupyterhub_config.py file
-  ## This configuration uses the values for the `singleuser` section. In the upstream chart the
-  ## values.yaml file is mounted in the hub container. This is chart, we tried to separate both
-  ## configuration so we could follow the Bitnami value standards
-  ## @param hub.configuration [string] Hub configuration file (to be used by jupyterhub_config.py)
-  ##
-  configuration: |
-    Chart:
-      Name: {{ .Chart.Name }}
-      Version: {{ .Chart.Version }}
-    Release:
-      Name: {{ .Release.Name }}
-      Namespace: {{ .Release.Namespace }}
-      Service: {{ .Release.Service }}
-    hub:
-      config:
-        JupyterHub:
-          admin_access: true
-          {{- if .Values.hub.auth.oauth.enabled }}
-          authenticator_class: generic-oauth
-          {{- else if .Values.hub.auth.gitlab.enabled }}
-          authenticator_class: gitlab
-          {{- else if .Values.hub.auth.dummy.enabled }}
-          authenticator_class: dummy
-          DummyAuthenticator:
-          {{- if .Values.hub.auth.dummy.password }}
-            password: {{ .Values.hub.auth.dummy.password | quote }}
-          {{- else }}
-            password: {{ randAlphaNum 10 | quote }}
-          {{- end }}
-          {{- end }}
-
-          {{- if .Values.hub.auth.gitlab.enabled }}
-          GitLabOAuthenticator:
-            gitlab_url: {{ .Values.hub.auth.gitlab.gitlabUrl }}
-            allowed_gitlab_groups: {{ .Values.hub.auth.gitlab.allowedGitlabGroups }}
-            allowed_project_ids: {{ .Values.hub.auth.gitlab.allowedProjectIds }}
-            client_id: {{ .Values.hub.auth.gitlab.clientId }}
-            client_secret: {{ .Values.hub.auth.gitlab.clientSecret }}
-          {{- end }}
-
-          {{- if .Values.hub.auth.oauth.enabled }}
-          GenericOAuthenticator:
-            client_id: {{ .Values.hub.auth.oauth.clientId }}
-            client_secret: {{ .Values.hub.auth.oauth.clientSecret }}
-            oauth_callback_url: {{ .Values.hub.auth.oauth.oauthCallbackUrl }}
-            authorize_url: {{ .Values.hub.auth.oauth.authorizeUrl }}
-            token_url: {{ .Values.hub.auth.oauth.tokenUrl }}
-            userdata_url: {{ .Values.hub.auth.oauth.userdataUrl }}
-            login_service: {{ .Values.hub.auth.oauth.loginService }}
-            username_key: {{ .Values.hub.auth.oauth.usernameKey }}
-            userdata_params:
-              state: state
-            {{- if .Values.hub.auth.oauth.adminUsers }}
-            adminUsers: {{- include "common.tplValues.render" ( dict "value" .Values.hub.auth.oauth.adminUsers "context" $ ) | nindent 10 }}
-            {{- end }}
-            {{- if .Values.hub.auth.oauth.adminGroups }}
-            admin_groups: {{- include "common.tplValues.render" ( dict "value" .Values.hub.auth.adminGroups "context" $ ) | nindent 10 }}
-            {{- end }}
-            {{- if .Values.hub.auth.oauth.allowedGroups }}
-            allowed_groups: {{- include "common.tplValues.render" ( dict "value" .Values.hub.auth.allowedGroups "context" $ ) | nindent 10 }}
-            {{- end }}
-            {{- if .Values.hub.auth.oauth.claimGroupsKey }}
-            claim_groups_key: {{ .Values.hub.auth.oauth.claimGroupsKey }}
-            {{- end }}
-          {{- end }}
-          {{- if and .Values.hub.auth.gitlab.enabled .Values.hub.auth.gitlab.adminUsers }}
-          Authenticator:
-            admin_users: {{- .Values.hub.auth.gitlab.adminUsers | toYaml | nindent 10 }}
-          {{- end }}
-          {{- if .Values.hub.auth.dummy.enabled }}
-          Authenticator:
-            admin_users:
-              - {{ .Values.hub.auth.dummy.adminUser }}
-          {{- end }}
-      cookieSecret:
-      concurrentSpawnLimit: 64
-      consecutiveFailureLimit: 5
-      activeServerLimit:
-      db:
-        type: postgres
-        url: postgresql://{{ ternary .Values.postgresql.auth.username .Values.externalDatabase.user .Values.postgresql.enabled }}@{{ ternary (include "codehub.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled }}:{{ ternary "5432" .Values.externalDatabase.port .Values.postgresql.enabled }}/{{ ternary .Values.postgresql.auth.database .Values.externalDatabase.database .Values.postgresql.enabled }}
-      services: {}
-      allowNamedServers: false
-      namedServerLimitPerUser:
-      {{- if .Values.hub.metrics.serviceMonitor.enabled }}
-      authenticatePrometheus: {{ .Values.hub.metrics.authenticatePrometheus }}
-      {{- end }}
-      redirectToServer:
-      shutdownOnLogout:
-    singleuser:
-      podNameTemplate: {{ include "common.names.fullname" . }}-jupyter-{username}
-      {{- if .Values.singleuser.tolerations }}
-      extraTolerations: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.tolerations "context" $) | nindent 4 }}
-      {{- end }}
-      {{- if .Values.singleuser.nodeSelector }}
-      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.nodeSelector "context" $) | nindent 4 }}
-      {{- end }}
-      networkTools:
-        image:
-          name: {{ include "codehub.hubconfiguration.imageEntry" ( dict "imageRoot" .Values.auxiliaryImage "global" $) }}
-          tag: {{ .Values.auxiliaryImage.tag }}
-          digest: {{ .Values.auxiliaryImage.digest }}
-          pullPolicy: {{ .Values.auxiliaryImage.pullPolicy }}
-          pullSecrets: {{- include "codehub.imagePullSecrets.list" . | nindent 8 }}
-      cloudMetadata:
-        blockWithIptables: false
-      events: true
-      extraAnnotations:
-        {{- if .Values.commonAnnotations }}
-        {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
-        {{- end }}
-        {{- if .Values.singleuser.podAnnotations }}
-        {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.podAnnotations "context" $ ) | nindent 4 }}
-        {{- end }}
-      extraLabels:
-        hub.jupyter.org/network-access-hub: "true"
-        app.kubernetes.io/component: singleuser
-        {{- include "common.labels.standard" . | nindent 4 }}
-        {{- if .Values.commonLabels }}
-        {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
-        {{- end }}
-        {{- if .Values.singleuser.podLabels }}
-        {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.podLabels "context" $ ) | nindent 4 }}
-        {{- end }}
-      {{- if .Values.singleuser.extraEnvVars }}
-      extraEnv: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.extraEnvVars "context" $ ) | nindent 4 }}
-      {{- end }}
-      {{- if .Values.singleuser.lifecycleHooks }}
-      lifecycleHooks: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.lifecycleHooks "context" $ ) | nindent 4 }}
-      {{- end }}
-      {{- if .Values.singleuser.initContainers }}
-      initContainers: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.initContainers "context" $ ) | nindent 4 }}
-      {{- end }}
-      {{- if .Values.singleuser.sidecars }}
-      extraContainers: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.sidecars "context" $ ) | nindent 4 }}
-      {{- end }}
-      {{- if .Values.singleuser.containerSecurityContext.enabled }}
-      container_security_context: {{- omit .Values.singleuser.containerSecurityContext "enabled" | toYaml | nindent 4 }}
-      {{- end }}
-      {{- if .Values.singleuser.podSecurityContext.enabled }}
-      fsGid: {{ .Values.singleuser.podSecurityContext.fsGroup }}
-      {{- end }}
-      profileList:
-        - description: "Code-Server"
-          default: true
-          display_name: "Code-Server"
-          kubespawner_override:
-            cmd:
-              - code-server
-            image: {{ include "codehub.hubconfiguration.imageEntry" ( dict "imageRoot" .Values.singleuser.image "global" $) }}:{{ .Values.singleuser.image.tag }}
-            {{- if .Values.singleuser.initContainers }}
-            init_containers: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.initContainers "context" $ ) | nindent 8 }}
-            {{- end }}
-            {{- if .Values.singleuser.sidecars }}
-            extra_containers: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.sidecars "context" $ ) | nindent 8 }}
-            {{- end }}
-            {{- if .Values.singleuser.containerSecurityContext.enabled }}
-            privileged: {{ .Values.singleuser.containerSecurityContext.privileged }}
-            allow_privilege_escalation: {{ .Values.singleuser.containerSecurityContext.AllowPrivilegeEscalation }}
-            uid: {{ .Values.singleuser.containerSecurityContext.runAsUser }}
-            {{- end }}
-            {{- if .Values.singleuser.podSecurityContext.enabled }}
-            fsGid: {{ .Values.singleuser.podSecurityContext.fsGroup }}
-            {{- end }}
-
-      serviceAccountName: {{ template "codehub.singleuserServiceAccountName" . }}
-      storage:
-        {{- if .Values.singleuser.persistence.enabled }}
-        type: dynamic
-        {{- else }}
-        type: none
-        {{- end }}
-        extraLabels:
-          app.kubernetes.io/component: singleuser
-          {{- include "common.labels.standard" . | nindent 6 }}
-        {{- if .Values.singleuser.extraVolumes }}
-        extraVolumes: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.extraVolumes "context" $ ) | nindent 4 }}
-        {{- end }}
-        {{- if .Values.singleuser.extraVolumeMounts }}
-        extraVolumeMounts: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.extraVolumeMounts "context" $ ) | nindent 4 }}
-        {{- end }}
-        capacity: {{ .Values.singleuser.persistence.size }}
-        homeMountPath: {{ .Values.singleuser.notebookDir }}
-        dynamic:
-          {{ include "codehub.storage.class" (dict "persistence" .Values.singleuser.persistence "global" .Values.global) }}
-          pvcNameTemplate: {{ include "common.names.fullname" . }}-claim-{username}{servername}
-          volumeNameTemplate: {{ include "common.names.fullname" . }}-volume-{username}{servername}
-          storageAccessModes: {{- include "common.tplvalues.render" ( dict "value" .Values.singleuser.persistence.accessModes "context" $ ) | nindent 8 }}
-      image:
-        name: {{ include "codehub.hubconfiguration.imageEntry" ( dict "imageRoot" .Values.singleuser.image "global" $) }}
-        tag: {{ .Values.singleuser.image.tag }}
-        digest: {{ .Values.singleuser.image.digest }}
-        pullPolicy: {{ .Values.singleuser.image.pullPolicy }}
-        pullSecrets: {{- include "codehub.imagePullSecrets.list" . | nindent 8 }}
-      startTimeout: 300
-      {{- /* We need to replace the Kubernetes memory/cpu terminology (e.g. 10Gi, 10Mi) with one compatible with Python (10G, 10M) */}}
-      cpu:
-        limit: {{ regexReplaceAll "([A-Za-z])i" (default "" .Values.singleuser.resources.limits.cpu)  "${1}" }}
-        guarantee: {{ regexReplaceAll "([A-Za-z])i" (default "" .Values.singleuser.resources.requests.cpu) "${1}" }}
-      memory:
-        limit: {{ regexReplaceAll "([A-Za-z])i" (default "" .Values.singleuser.resources.limits.memory) "${1}" }}
-        guarantee: {{ regexReplaceAll "([A-Za-z])i" (default "" .Values.singleuser.resources.requests.memory) "${1}" }}
-      {{- if .Values.singleuser.command }}
-      cmd: {{- include "common.tplvalues.render" (dict "value" .Values.singleuser.command "context" $) | nindent 12 }}
-      {{- else }}
-      cmd: code-server
-      {{- end }}
-      defaultUrl:
-    cull:
-      enabled: true
-      users: false
-      removeNamedServers: false
-      timeout: 3600
-      every: 600
-      concurrency: 10
-      maxAge: 0
   ## @param hub.existingConfigmap Configmap with Hub init scripts (replaces the scripts in templates/hub/configmap.yml)
   ##
   existingConfigmap: ""
@@ -454,14 +237,26 @@ hub:
     requests: {}
   ## hub containers' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
-  ## @param hub.containerSecurityContext.enabled Enabled Hub containers' Security Context
-  ## @param hub.containerSecurityContext.runAsUser Set Hub container's Security Context runAsUser
-  ## @param hub.containerSecurityContext.runAsNonRoot Set Hub container's Security Context runAsNonRoot
+  ## @param hub.containerSecurityContext.enabled Enabled containers' Security Context
+  ## @param hub.containerSecurityContext.runAsUser Set containers' Security Context runAsUser
+  ## @param hub.containerSecurityContext.runAsNonRoot Set container's Security Context runAsNonRoot
+  ## @param hub.containerSecurityContext.privileged Set container's Security Context privileged
+  ## @param hub.containerSecurityContext.readOnlyRootFilesystem Set container's Security Context readOnlyRootFilesystem
+  ## @param hub.containerSecurityContext.allowPrivilegeEscalation Set container's Security Context allowPrivilegeEscalation
+  ## @param hub.containerSecurityContext.capabilities.drop List of capabilities to be dropped
+  ## @param hub.containerSecurityContext.seccompProfile.type Set container's Security Context seccomp profile
   ##
   containerSecurityContext:
     enabled: true
-    runAsUser: 1000
+    runAsUser: 1001
     runAsNonRoot: true
+    privileged: false
+    readOnlyRootFilesystem: false
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: "RuntimeDefault"
   ## hub pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param hub.podSecurityContext.enabled Enabled Hub pods' Security Context
@@ -765,7 +560,7 @@ proxy:
   image:
     registry: docker.io
     repository: bitnami/configurable-http-proxy
-    tag: 4.6.0-debian-11-r16
+    tag: 4.6.0-debian-11-r17
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -877,14 +672,26 @@ proxy:
     requests: {}
   ## Proxy containers' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
-  ## @param proxy.containerSecurityContext.enabled Enabled Proxy containers' Security Context
-  ## @param proxy.containerSecurityContext.runAsUser Set Proxy container's Security Context runAsUser
-  ## @param proxy.containerSecurityContext.runAsNonRoot Set Proxy container's Security Context runAsNonRoot
+  ## @param proxy.containerSecurityContext.enabled Enabled containers' Security Context
+  ## @param proxy.containerSecurityContext.runAsUser Set containers' Security Context runAsUser
+  ## @param proxy.containerSecurityContext.runAsNonRoot Set container's Security Context runAsNonRoot
+  ## @param proxy.containerSecurityContext.privileged Set container's Security Context privileged
+  ## @param proxy.containerSecurityContext.readOnlyRootFilesystem Set container's Security Context readOnlyRootFilesystem
+  ## @param proxy.containerSecurityContext.allowPrivilegeEscalation Set container's Security Context allowPrivilegeEscalation
+  ## @param proxy.containerSecurityContext.capabilities.drop List of capabilities to be dropped
+  ## @param proxy.containerSecurityContext.seccompProfile.type Set container's Security Context seccomp profile
   ##
   containerSecurityContext:
     enabled: true
     runAsUser: 1001
     runAsNonRoot: true
+    privileged: false
+    readOnlyRootFilesystem: false
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: "RuntimeDefault"
   ## Proxy pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param proxy.podSecurityContext.enabled Enabled Proxy pods' Security Context
@@ -1407,14 +1214,26 @@ imagePuller:
     requests: {}
   ## ImagePuller containers' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
-  ## @param imagePuller.containerSecurityContext.enabled Enabled ImagePuller containers' Security Context
-  ## @param imagePuller.containerSecurityContext.runAsUser Set ImagePuller container's Security Context runAsUser
-  ## @param imagePuller.containerSecurityContext.runAsNonRoot Set ImagePuller container's Security Context runAsNonRoot
+  ## @param imagePuller.containerSecurityContext.enabled Enabled containers' Security Context
+  ## @param imagePuller.containerSecurityContext.runAsUser Set containers' Security Context runAsUser
+  ## @param imagePuller.containerSecurityContext.runAsNonRoot Set container's Security Context runAsNonRoot
+  ## @param imagePuller.containerSecurityContext.privileged Set container's Security Context privileged
+  ## @param imagePuller.containerSecurityContext.readOnlyRootFilesystem Set container's Security Context readOnlyRootFilesystem
+  ## @param imagePuller.containerSecurityContext.allowPrivilegeEscalation Set container's Security Context allowPrivilegeEscalation
+  ## @param imagePuller.containerSecurityContext.capabilities.drop List of capabilities to be dropped
+  ## @param imagePuller.containerSecurityContext.seccompProfile.type Set container's Security Context seccomp profile
   ##
   containerSecurityContext:
     enabled: true
     runAsUser: 1001
     runAsNonRoot: true
+    privileged: false
+    readOnlyRootFilesystem: false
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: "RuntimeDefault"
   ## ImagePuller pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param imagePuller.podSecurityContext.enabled Enabled ImagePuller pods' Security Context
@@ -1544,158 +1363,182 @@ imagePuller:
 ## @param singleuser.image.pullSecrets Single User image pull secrets
 ##
 singleuser:
-  image:
-    registry: docker.io
-    repository: captnbp/code-server
-    tag: 4.18.0-r0
-    digest: ""
-    ## Specify a imagePullPolicy
-    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
-    ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-    ##
-    ##
-    pullPolicy: IfNotPresent
-    ## Optionally specify an array of imagePullSecrets.
-    ## Secrets must be manually created in the namespace.
-    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-    ## e.g:
-    ## pullSecrets:
-    ##   - myRegistryKeySecretName
-    ##
-    pullSecrets: []
-  ## @param singleuser.notebookDir Notebook directory (it will be the same as the PVC volume mount)
-  ##
-  notebookDir: "/home/coder"
-  ## @param singleuser.allowPrivilegeEscalation Controls whether a process can gain more privileges than its parent process
-  ##
-  allowPrivilegeEscalation: false
-  ## Command for running the container (set to default if not set). Use array form
-  ## @param singleuser.command Override Single User default command
-  ##
-  command: []
-  ## @param singleuser.extraEnvVars Extra environment variables that should be set for the user pods
-  ## ref: https://zero-to-jupyterhub.readthedocs.io/en/latest/resources/reference.html#singleuser-extraenv
-  ##
-  extraEnvVars: []
-  ## @param singleuser.containerPort Single User container port
-  ##
-  containerPort: 8888
-  ## Singleuser resource requests and limits
-  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
-  ## @param singleuser.resources.limits The resources limits for the Singleuser containers
-  ## @param singleuser.resources.requests The requested resources for the Singleuser containers
-  ##
-  resources:
-    limits: {}
-    requests: {}
-  ## singleuser containers' Security Context
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
-  ## @param singleuser.containerSecurityContext.enabled Enabled Single User containers' Security Context
-  ## @param singleuser.containerSecurityContext.runAsUser Set Single User container's Security Context runAsUser
-  ## @param singleuser.containerSecurityContext.privileged Set Single User container's Security Context privileged flag
-  ## @param singleuser.containerSecurityContext.allowPrivilegeEscalation Set Single User container's Security Context allowPrivilegeEscalation flag
-  ## @param singleuser.containerSecurityContext.runAsNonRoot Set Single User container's Security Context runAsNonRoot
-  ##
-  containerSecurityContext:
-    enabled: true
-    runAsUser: 1000
-    privileged: false
-    allowPrivilegeEscalation: false
-    runAsNonRoot: true
-    readOnlyRootFilesystem: false
-  ## singleuser pods' Security Context
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
-  ## @param singleuser.podSecurityContext.enabled Enabled Single User pods' Security Context
-  ## @param singleuser.podSecurityContext.fsGroup Set Single User pod's Security Context fsGroup
-  ##
-  podSecurityContext:
-    enabled: true
-    fsGroup: 1000
-  ## @param singleuser.podLabels Extra labels for Single User pods
-  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-  ##
-  podLabels: {}
-  ## @param singleuser.podAnnotations Annotations for Single User pods
-  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
-  ##
-  podAnnotations: {}
-  ## @param singleuser.nodeSelector Node labels for pod assignment. Evaluated as a template.
-  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
-  ##
-  nodeSelector: {}
-  ## @param singleuser.tolerations Tolerations for pod assignment. Evaluated as a template.
-  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-  ##
-  tolerations: []
-  ## @param singleuser.priorityClassName Single User pod priority class name
-  ## ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
-  ##
-  priorityClassName: ""
-  ## @param singleuser.lifecycleHooks Add lifecycle hooks to the Single User deployment to automate configuration before or after startup
-  ##
-  lifecycleHooks: {}
-  ## @param singleuser.extraVolumes Optionally specify extra list of additional volumes for Single User pods
-  ##
-  extraVolumes: []
-  ## @param singleuser.extraVolumeMounts Optionally specify extra list of additional volumeMounts for Single User container(s)
-  ##
-  extraVolumeMounts: []
-  ## @param singleuser.initContainers  Add additional init containers to the Single User pods
-  ## Example:
-  ## initContainers:
-  ##   - name: your-image-name
-  ##     image: your-image
-  ##     imagePullPolicy: Always
-  ##     ports:
-  ##       - name: portname
-  ##         containerPort: 1234
-  ##
-  initContainers: []
-  ## @skip ingleuser.sidecars
-  ## @skip singleuser.sidecars[0]
-  ## @skip singleuser.sidecars[1]
-  sidecars:
-    - name: nginx
-      image: docker.io/captnbp/nginx:4.18.0-r0
+  profiles:
+    - name: "Code-Server"
+      description: "https://lab.frogg.it/doca/codehub-container-images/-/tree/main/code-server"
+      image:
+        registry: docker.io
+        repository: captnbp/code-server
+        tag: 4.18.0-r0
+        digest: ""
+        ## Specify a imagePullPolicy
+        ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+        ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+        ##
+        ##
+        pullPolicy: IfNotPresent
+        ## Optionally specify an array of imagePullSecrets.
+        ## Secrets must be manually created in the namespace.
+        ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+        ## e.g:
+        ## pullSecrets:
+        ##   - myRegistryKeySecretName
+        ##
+        pullSecrets: []
+      ## @param singleuser.notebookDir Notebook directory (it will be the same as the PVC volume mount)
+      ##
+      notebookDir: "/home/coder"
+      ## @param singleuser.allowPrivilegeEscalation Controls whether a process can gain more privileges than its parent process
+      ##
+      allowPrivilegeEscalation: false
+      ## Command for running the container (set to default if not set). Use array form
+      ## @param singleuser.command Override Single User default command
+      ##
+      command: []
+      ## @param singleuser.extraEnvVars Extra environment variables that should be set for the user pods
+      ## ref: https://zero-to-jupyterhub.readthedocs.io/en/latest/resources/reference.html#singleuser-extraenv
+      ##
+      extraEnvVars: []
+      ## @param singleuser.containerPort Single User container port
+      ##
+      containerPort: 8888
+      ## Singleuser resource requests and limits
+      ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+      ## @param singleuser.resources.limits The resources limits for the Singleuser containers
+      ## @param singleuser.resources.requests The requested resources for the Singleuser containers
+      ##
       resources:
-        requests:
-          cpu: 100m
-          memory: 50Mi
-        limits:
-          cpu: 100m
-          memory: 100Mi
-      securityContext:
-        allowPrivilegeEscalation: false
-        runAsUser: 101
-        runAsGroup: 101
-        privileged: false
+        limits: {}
+        requests: {}
+      ## Singleuser extra resource requests and limits (Ex. for GPUs)
+      ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+      ## @param singleuser.extraResources.limits The resources limits for the Singleuser containers
+      ## @param singleuser.extraResources.requests The requested resources for the Singleuser containers
+      ## e.g:
+      ## extraResources:
+      ##   requests:
+      ##     "nvidia.com/gpu": "1"
+      ##   limits:
+      ##     "nvidia.com/gpu": "1"
+      ##
+      extraResources:
+        limits: {}
+        requests: {}
+      ## singleuser containers' Security Context
+      ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+      ## @param singleuser.containerSecurityContext.enabled Enabled containers' Security Context
+      ## @param singleuser.containerSecurityContext.runAsUser Set containers' Security Context runAsUser
+      ## @param singleuser.containerSecurityContext.runAsNonRoot Set container's Security Context runAsNonRoot
+      ## @param singleuser.containerSecurityContext.privileged Set container's Security Context privileged
+      ## @param singleuser.containerSecurityContext.readOnlyRootFilesystem Set container's Security Context readOnlyRootFilesystem
+      ## @param singleuser.containerSecurityContext.allowPrivilegeEscalation Set container's Security Context allowPrivilegeEscalation
+      ## @param singleuser.containerSecurityContext.capabilities.drop List of capabilities to be dropped
+      ## @param singleuser.containerSecurityContext.seccompProfile.type Set container's Security Context seccomp profile
+      ##
+      containerSecurityContext:
+        enabled: true
+        runAsUser: 1000
         runAsNonRoot: true
-        capabilities:
-          drop:
-            - ALL
-    - name: oauth
-      image: docker.io/captnbp/oauth:4.18.0-r0
-      ports:
-        - containerPort: 9095
-          name: oauth
-          protocol: TCP
-      resources:
-        requests:
-          cpu: 100m
-          memory: 50Mi
-        limits:
-          cpu: 100m
-          memory: 100Mi
-      securityContext:
-        allowPrivilegeEscalation: false
-        runAsUser: 33
-        runAsGroup: 33
         privileged: false
-        runAsNonRoot: true
-        readOnlyFileSystem: true
+        readOnlyRootFilesystem: false
+        allowPrivilegeEscalation: false
         capabilities:
-          drop:
-            - ALL
+          drop: ["ALL"]
+        seccompProfile:
+          type: "RuntimeDefault"
+      ## singleuser pods' Security Context
+      ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+      ## @param singleuser.podSecurityContext.enabled Enabled Single User pods' Security Context
+      ## @param singleuser.podSecurityContext.fsGroup Set Single User pod's Security Context fsGroup
+      ##
+      podSecurityContext:
+        enabled: true
+        fsGroup: 1000
+      ## @param singleuser.podLabels Extra labels for Single User pods
+      ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+      ##
+      podLabels: {}
+      ## @param singleuser.podAnnotations Annotations for Single User pods
+      ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+      ##
+      podAnnotations: {}
+      ## @param singleuser.nodeSelector Node labels for pod assignment. Evaluated as a template.
+      ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+      ##
+      nodeSelector: {}
+      ## @param singleuser.tolerations Tolerations for pod assignment. Evaluated as a template.
+      ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+      ##
+      tolerations: []
+      ## @param singleuser.priorityClassName Single User pod priority class name
+      ## ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+      ##
+      priorityClassName: ""
+      ## @param singleuser.lifecycleHooks Add lifecycle hooks to the Single User deployment to automate configuration before or after startup
+      ##
+      lifecycleHooks: {}
+      ## @param singleuser.extraVolumes Optionally specify extra list of additional volumes for Single User pods
+      ##
+      extraVolumes: []
+      ## @param singleuser.extraVolumeMounts Optionally specify extra list of additional volumeMounts for Single User container(s)
+      ##
+      extraVolumeMounts: []
+      ## @param singleuser.initContainers  Add additional init containers to the Single User pods
+      ## Example:
+      ## initContainers:
+      ##   - name: your-image-name
+      ##     image: your-image
+      ##     imagePullPolicy: Always
+      ##     ports:
+      ##       - name: portname
+      ##         containerPort: 1234
+      ##
+      initContainers: []
+      ## @skip ingleuser.sidecars
+      ## @skip singleuser.sidecars[0]
+      ## @skip singleuser.sidecars[1]
+      sidecars:
+        - name: nginx
+          image: docker.io/captnbp/nginx:4.18.0-r0
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 101
+            runAsGroup: 101
+            privileged: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+        - name: oauth
+          image: docker.io/captnbp/oauth:4.18.0-r0
+          ports:
+            - containerPort: 9095
+              name: oauth
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 33
+            runAsGroup: 33
+            privileged: false
+            runAsNonRoot: true
+            readOnlyFileSystem: true
+            capabilities:
+              drop:
+                - ALL
 
   ## @section Single User RBAC parameters
 
@@ -1738,7 +1581,7 @@ singleuser:
       - ReadWriteOnce
     ## @param singleuser.persistence.size Persistent Volumes size
     ##
-    size: 10Gi
+    size: 20Gi
 
   ## @section Traffic exposure parameters
 
@@ -1772,7 +1615,7 @@ singleuser:
 auxiliaryImage:
   registry: docker.io
   repository: bitnami/os-shell
-  tag: 11-debian-11-r51
+  tag: 11-debian-11-r90
   digest: ""
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.

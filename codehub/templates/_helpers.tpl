@@ -31,6 +31,25 @@ Return the proper hub image name
 {{- end -}}
 
 {{/*
+Return the apiToken value
+*/}}
+{{- define "codehub.hub.config.apiToken" -}}
+    {{ $hubConfiguration := include "common.tplvalues.render" ( dict "value" .Values.hub.configuration "context" $ ) | fromYaml }}
+    {{- if ($hubConfiguration | dig "hub" "config" "JupyterHub" "apiToken" "") }}
+        {{- $hubConfiguration.apiToken }}
+    {{- else if ($hubConfiguration | dig "hub" "apiToken" "") }}
+        {{- $hubConfiguration.hub.apiToken }}
+    {{- else }}
+        {{- $secretData := (lookup "v1" "Secret" $.Release.Namespace ( include "codehub.hub.name" . )).data }}
+        {{- if hasKey $secretData "apiToken" }}
+            {{- index $secretData "apiToken" | b64dec }}
+        {{- else }}
+            {{- include "codehub.randHex" 64 }}
+        {{- end }}
+    {{- end }}
+{{- end }}
+
+{{/*
 Return the cookie_secret value
 */}}
 {{- define "codehub.hub.config.JupyterHub.cookie_secret" -}}

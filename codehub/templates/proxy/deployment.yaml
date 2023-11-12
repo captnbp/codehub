@@ -124,7 +124,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ include "codehub.hubSecretName" . }}
-                  key: proxy-token
+                  key: apiToken
             {{- if .Values.proxy.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.proxy.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}

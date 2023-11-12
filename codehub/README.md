@@ -38,7 +38,7 @@ MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1er+5JMY/P0+R8wiW3HSjGUohoMf
 GEVe7kEAkv1mARM+NyeR5Cd2PpEZnlmNhb2jvyWczfAyj09oA/H47VCQnA==
 -----END PUBLIC KEY-----
 
-$ cosign verify -key ./cosign.pub lab.frogg.it:5050/doca/codehub-container-images/code-server:4.16.1
+$ cosign verify -key ./cosign.pub docker.io/captnbp/code-server:4.18.0-r0
 ```
 
 You can also set the following Kyverno Cluster Policy :
@@ -74,7 +74,7 @@ spec:
           imageReferences:
             - lab.frogg.it:5050/doca/*
             - lab.frogg.it:5050/captnbp/*
-            - registry-1.docker.io/captnbp/*
+            - docker.io/captnbp/*
           mutateDigest: true
           required: true
           verifyDigest: true
@@ -281,7 +281,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
 | `proxy.image.registry`                        | Proxy image registry                                                                                                     | `docker.io`                       |
 | `proxy.image.repository`                      | Proxy image repository                                                                                                   | `bitnami/configurable-http-proxy` |
-| `proxy.image.tag`                             | Proxy image tag (immutable tags are recommended)                                                                         | `4.5.3-debian-11-r16`             |
+| `proxy.image.tag`                             | Proxy image tag (immutable tags are recommended)                                                                         | `4.5.3-debian-11-r17`             |
 | `proxy.image.digest`                          | Proxy image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag                    | `""`                              |
 | `proxy.image.pullPolicy`                      | Proxy image pull policy                                                                                                  | `IfNotPresent`                    |
 | `proxy.image.pullSecrets`                     | Proxy image pull secrets                                                                                                 | `[]`                              |

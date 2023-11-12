@@ -75,7 +75,8 @@ data:
         "slow_spawn_timeout": 0,
     }
 
-
+    #c.JupyterHub.internal_ssl = True
+    #c.JupyterHub.internal_certs_location = "/tmp"
     # configure the hub db connection
     db_type = get_config("hub.db.type")
     if db_type == "sqlite-pvc":
@@ -155,65 +156,22 @@ data:
     for trait, cfg_key in (
         ("pod_name_template", None),
         ("start_timeout", None),
-        ("image_pull_policy", "image.pullPolicy"),
-        # ('image_pull_secrets', 'image.pullSecrets'), # Managed manually below
         ("events_enabled", "events"),
-        ("extra_labels", None),
-        ("extra_annotations", None),
-        ("uid", None),
-        ("fs_gid", None),
-        ("run_privileged", None),
-        ("privileged", "privileged"),
         ("container_security_context", "container_security_context"),
-        ("allow_privilege_escalation", "allow_privilege_escalation"),
         ("service_account", "serviceAccountName"),
         ("storage_extra_labels", "storage.extraLabels"),
-        # ("tolerations", "extraTolerations"), # Managed manually below
-        ("node_selector", None),
         ("node_affinity_required", "extraNodeAffinity.required"),
         ("node_affinity_preferred", "extraNodeAffinity.preferred"),
         ("pod_affinity_required", "extraPodAffinity.required"),
         ("pod_affinity_preferred", "extraPodAffinity.preferred"),
         ("pod_anti_affinity_required", "extraPodAntiAffinity.required"),
         ("pod_anti_affinity_preferred", "extraPodAntiAffinity.preferred"),
-        ("lifecycle_hooks", None),
-        ("init_containers", None),
-        ("extra_containers", None),
-        ("mem_limit", "memory.limit"),
-        ("mem_guarantee", "memory.guarantee"),
-        ("cpu_limit", "cpu.limit"),
-        ("cpu_guarantee", "cpu.guarantee"),
-        ("extra_resource_limits", "extraResource.limits"),
-        ("extra_resource_guarantees", "extraResource.guarantees"),
-        ("environment", "extraEnv"),
         ("profile_list", None),
         ("extra_pod_config", None),
     ):
         if cfg_key is None:
             cfg_key = camelCaseify(trait)
         set_config_if_not_none(c.KubeSpawner, trait, "singleuser." + cfg_key)
-
-    image = get_config("singleuser.image.name")
-    if image:
-        tag = get_config("singleuser.image.tag")
-        if tag:
-            image = f"{image}:{tag}"
-
-        c.KubeSpawner.image = image
-
-    # Combine imagePullSecret.create (single), imagePullSecrets (list), and
-    # singleuser.image.pullSecrets (list).
-    image_pull_secrets = []
-    if get_config("imagePullSecret.automaticReferenceInjection") and get_config(
-        "imagePullSecret.create"
-    ):
-        image_pull_secrets.append(get_name("image-pull-secret"))
-    if get_config("imagePullSecrets"):
-        image_pull_secrets.extend(get_config("imagePullSecrets"))
-    if get_config("singleuser.image.pullSecrets"):
-        image_pull_secrets.extend(get_config("singleuser.image.pullSecrets"))
-    if image_pull_secrets:
-        c.KubeSpawner.image_pull_secrets = image_pull_secrets
 
     # scheduling:
     if get_config("scheduling.userScheduler.enabled"):
@@ -248,13 +206,6 @@ data:
             raise ValueError(
                 f"Unrecognized value for matchNodePurpose: {match_node_purpose}"
             )
-
-    # Combine the common tolerations for user pods with singleuser tolerations
-    scheduling_user_pods_tolerations = get_config("scheduling.userPods.tolerations", [])
-    singleuser_extra_tolerations = get_config("singleuser.extraTolerations", [])
-    tolerations = scheduling_user_pods_tolerations + singleuser_extra_tolerations
-    if tolerations:
-        c.KubeSpawner.tolerations = tolerations
 
     # Configure dynamically provisioning pvc
     storage_type = get_config("singleuser.storage.type")
@@ -536,7 +487,7 @@ data:
         mounted secret (hub.existingSecret)."""
 
         cfg = {}
-        for source in ("secret/values.yaml", "existing-secret/values.yaml"):
+        for source in ("config/values.yaml", "secret/values.yaml", "existing-secret/values.yaml"):
             path = f"/usr/local/etc/jupyterhub/{source}"
             if os.path.exists(path):
                 print(f"Loading {path}")
