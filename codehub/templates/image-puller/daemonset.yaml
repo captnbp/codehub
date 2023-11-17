@@ -64,10 +64,10 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.imagePuller.terminationGracePeriodSeconds }}
       {{- end }}
       initContainers:
-      {{- range $index, $image := (list .Values.singleuser.image .Values.auxiliaryImage) }}
+      {{- range $index, $profile := .Values.singleuser.profiles }}
         - name: pull-{{ $index }}
-          image: {{ include "common.images.image" (dict "imageRoot" . "global" $.Values.global) }}
-          imagePullPolicy: {{ .pullPolicy }}
+          image: {{ include "common.images.image" (dict "imageRoot" .image "global" $.Values.global) }}
+          imagePullPolicy: {{ .image.pullPolicy }}
           {{- if $.Values.imagePuller.resources }}
           resources: {{- toYaml $.Values.imagePuller.resources | nindent 12 }}
           {{- end }}
