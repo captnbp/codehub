@@ -75,8 +75,6 @@ data:
         "slow_spawn_timeout": 0,
     }
 
-    #c.JupyterHub.internal_ssl = True
-    #c.JupyterHub.internal_certs_location = "/tmp"
     # configure the hub db connection
     db_type = get_config("hub.db.type")
     if db_type == "sqlite-pvc":

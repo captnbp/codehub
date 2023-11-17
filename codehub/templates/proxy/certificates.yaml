@@ -1,0 +1,60 @@
+{{- if (include "codehub.proxy.createTlsSecret" .) }}
+{{- $releaseNamespace := .Release.Namespace }}
+{{- $clusterDomain := .Values.clusterDomain }}
+{{- $fullname := include "common.names.fullname" . }}
+{{- $serviceName := include "common.names.fullname" . }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "common.names.fullname" . }}-proxy-crt
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  secretTemplate:
+    labels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: proxy
+      {{- if .Values.commonLabels }}
+      {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 6 }}
+      {{- end }}
+    {{- if .Values.commonAnnotations }}
+    annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 6 }}
+    {{- end }}
+  secretName: {{ include "common.names.fullname" . }}-proxy-crt
+  duration: 4320h # 180d
+  renewBefore: 2160h # 90d
+  commonName: "{{ $fullname }}"
+  subject:
+    organizationalUnits:
+      - {{ .Values.clusterName }}
+    organizations:
+      - {{ .Values.tls.subject.organizations }}
+    countries:
+      - {{ .Values.tls.subject.countries }}
+  dnsNames:
+    - "{{ printf "%s-proxy-api" $serviceName }}"
+    - "{{ printf "%s-proxy-api.%s.svc.%s" $serviceName $releaseNamespace $clusterDomain }}"
+    - "{{ printf "%s-proxy-public.%s.svc.%s" $serviceName $releaseNamespace $clusterDomain }}"
+    - "localhost"
+  ipAddresses:
+    - "127.0.0.1"
+    - "::1"
+  usages:
+    - server auth
+  privateKey:
+    algorithm: {{ .Values.tls.algorithm }}
+    encoding: PKCS1
+    size: {{ .Values.tls.size }}
+  issuerRef:
+    name: {{ include "codehub.issuerName" . }}
+    kind: {{ .Values.tls.issuerRef.kind }}
+    group: {{ .Values.tls.issuerRef.group }}
+
+---
+{{- end }}

@@ -238,6 +238,10 @@ spec:
               name: values
             - mountPath: /usr/local/etc/jupyterhub/secret/
               name: secret
+            {{- if .Values.tls.enabled }}
+            - mountPath: /cert/
+              name: server-cert
+            {{- end }}
           {{- if .Values.hub.extraVolumeMounts }}
           {{- include "common.tplvalues.render" (dict "value" .Values.hub.extraVolumeMounts "context" $) | nindent 12 }}
           {{- end }}
@@ -254,6 +258,11 @@ spec:
         - name: secret
           secret:
             secretName: {{ include "codehub.hubSecretName" . }}
+        {{- if .Values.tls.enabled }}
+        - name: server-cert
+          secret:
+            secretName: {{ include "common.names.fullname" . }}-hub-crt
+        {{- end }}
         {{- if .Values.hub.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.hub.extraVolumes "context" $) | nindent 8 }}
         {{- end }}
