@@ -133,7 +133,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------- |
 | `hub.image.registry`                                    | Hub image registry                                                                                                       | `docker.io`           |
 | `hub.image.repository`                                  | Hub image repository                                                                                                     | `bitnami/jupyterhub`  |
-| `hub.image.tag`                                         | Hub image tag (immutable tags are recommended)                                                                           | `4.0.2-debian-11-r58` |
+| `hub.image.tag`                                         | Hub image tag (immutable tags are recommended)                                                                           | `4.0.2-debian-11-r63` |
 | `hub.image.digest`                                      | Hub image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag                      | `""`                  |
 | `hub.image.pullPolicy`                                  | Hub image pull policy                                                                                                    | `IfNotPresent`        |
 | `hub.image.pullSecrets`                                 | Hub image pull secrets                                                                                                   | `[]`                  |
