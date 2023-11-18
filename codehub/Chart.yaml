@@ -2,18 +2,18 @@ annotations:
   category: developpment
   artifacthub.io/images: |
     - name: code-server
-      image: docker.io/captnbp//code-server:4.18.0-r0
+      image: docker.io/captnbp/code-server:4.19.0-r0
     - name: jupyterhub
       image: docker.io/bitnami/jupyterhub:4.0.2-debian-11-r55
     - name: oauth
-      image: docker.io/captnbp//oauth:4.18.0-r0
+      image: docker.io/captnbp/oauth:4.19.0-r0
     - name: nginx
-      image: docker.io/captnbp//nginx:4.18.0-r0
+      image: docker.io/captnbp/nginx:4.19.0-r0
     - name: configurable-http-proxy
       image: docker.io/bitnami/configurable-http-proxy:4.6.0-debian-11-r16
   artifacthub.io/license: MIT
 apiVersion: v2
-appVersion: 4.18.0-r0
+appVersion: 4.19.0-r0
 dependencies:
   - condition: postgresql.enabled
     name: postgresql

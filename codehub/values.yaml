@@ -1544,119 +1544,52 @@ imagePuller:
 ## @param singleuser.image.pullSecrets Single User image pull secrets
 ##
 singleuser:
-  image:
-    registry: docker.io
-    repository: captnbp/code-server
-    tag: 4.18.0-r0
-    digest: ""
-    ## Specify a imagePullPolicy
-    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
-    ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-    ##
-    ##
-    pullPolicy: IfNotPresent
-    ## Optionally specify an array of imagePullSecrets.
-    ## Secrets must be manually created in the namespace.
-    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-    ## e.g:
-    ## pullSecrets:
-    ##   - myRegistryKeySecretName
-    ##
-    pullSecrets: []
-  ## @param singleuser.notebookDir Notebook directory (it will be the same as the PVC volume mount)
-  ##
-  notebookDir: "/home/coder"
-  ## @param singleuser.allowPrivilegeEscalation Controls whether a process can gain more privileges than its parent process
-  ##
-  allowPrivilegeEscalation: false
-  ## Command for running the container (set to default if not set). Use array form
-  ## @param singleuser.command Override Single User default command
-  ##
-  command: []
-  ## @param singleuser.extraEnvVars Extra environment variables that should be set for the user pods
-  ## ref: https://zero-to-jupyterhub.readthedocs.io/en/latest/resources/reference.html#singleuser-extraenv
-  ##
-  extraEnvVars: []
-  ## @param singleuser.containerPort Single User container port
-  ##
-  containerPort: 8888
-  ## Singleuser resource requests and limits
-  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
-  ## @param singleuser.resources.limits The resources limits for the Singleuser containers
-  ## @param singleuser.resources.requests The requested resources for the Singleuser containers
-  ##
-  resources:
-    limits: {}
-    requests: {}
-  ## singleuser containers' Security Context
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
-  ## @param singleuser.containerSecurityContext.enabled Enabled Single User containers' Security Context
-  ## @param singleuser.containerSecurityContext.runAsUser Set Single User container's Security Context runAsUser
-  ## @param singleuser.containerSecurityContext.privileged Set Single User container's Security Context privileged flag
-  ## @param singleuser.containerSecurityContext.allowPrivilegeEscalation Set Single User container's Security Context allowPrivilegeEscalation flag
-  ## @param singleuser.containerSecurityContext.runAsNonRoot Set Single User container's Security Context runAsNonRoot
-  ##
-  containerSecurityContext:
-    enabled: true
-    runAsUser: 1000
-    privileged: false
-    allowPrivilegeEscalation: false
-    runAsNonRoot: true
-    readOnlyRootFilesystem: false
-  ## singleuser pods' Security Context
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
-  ## @param singleuser.podSecurityContext.enabled Enabled Single User pods' Security Context
-  ## @param singleuser.podSecurityContext.fsGroup Set Single User pod's Security Context fsGroup
-  ##
-  podSecurityContext:
-    enabled: true
-    fsGroup: 1000
-  ## @param singleuser.podLabels Extra labels for Single User pods
-  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-  ##
-  podLabels: {}
-  ## @param singleuser.podAnnotations Annotations for Single User pods
-  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
-  ##
-  podAnnotations: {}
-  ## @param singleuser.nodeSelector Node labels for pod assignment. Evaluated as a template.
-  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
-  ##
-  nodeSelector: {}
-  ## @param singleuser.tolerations Tolerations for pod assignment. Evaluated as a template.
-  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-  ##
-  tolerations: []
-  ## @param singleuser.priorityClassName Single User pod priority class name
-  ## ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
-  ##
-  priorityClassName: ""
-  ## @param singleuser.lifecycleHooks Add lifecycle hooks to the Single User deployment to automate configuration before or after startup
-  ##
-  lifecycleHooks: {}
-  ## @param singleuser.extraVolumes Optionally specify extra list of additional volumes for Single User pods
-  ##
-  extraVolumes: []
-  ## @param singleuser.extraVolumeMounts Optionally specify extra list of additional volumeMounts for Single User container(s)
-  ##
-  extraVolumeMounts: []
-  ## @param singleuser.initContainers  Add additional init containers to the Single User pods
-  ## Example:
-  ## initContainers:
-  ##   - name: your-image-name
-  ##     image: your-image
-  ##     imagePullPolicy: Always
-  ##     ports:
-  ##       - name: portname
-  ##         containerPort: 1234
-  ##
-  initContainers: []
-  ## @skip ingleuser.sidecars
-  ## @skip singleuser.sidecars[0]
-  ## @skip singleuser.sidecars[1]
-  sidecars:
-    - name: nginx
-      image: docker.io/captnbp/nginx:4.18.0-r0
+  profiles:
+    ## @param singleuser.profiles[0].name Single User name
+    - name: "Code-Server"
+      ## @param singleuser.profiles[0].description Single User description
+      description: "https://lab.frogg.it/doca/codehub-container-images/-/tree/main/code-server"
+      image:
+        registry: docker.io
+        repository: captnbp/code-server
+        tag: 4.19.0-r0
+        digest: ""
+        ## Specify a imagePullPolicy
+        ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+        ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+        ##
+        ##
+        pullPolicy: IfNotPresent
+        ## Optionally specify an array of imagePullSecrets.
+        ## Secrets must be manually created in the namespace.
+        ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+        ## e.g:
+        ## pullSecrets:
+        ##   - myRegistryKeySecretName
+        ##
+        pullSecrets: []
+      ## @param singleuser.profiles[0].notebookDir Notebook directory (it will be the same as the PVC volume mount)
+      ##
+      notebookDir: "/home/coder"
+      ## @param singleuser.profiles[0].allowPrivilegeEscalation Controls whether a process can gain more privileges than its parent process
+      ##
+      allowPrivilegeEscalation: false
+      ## Command for running the container (set to default if not set). Use array form
+      ## @param singleuser.profiles[0].command Override Single User default command
+      ##
+      command: []
+      ## @param singleuser.profiles[0].extraEnvVars Extra environment variables that should be set for the user pods
+      ## ref: https://zero-to-jupyterhub.readthedocs.io/en/latest/resources/reference.html#singleuser-extraenv
+      ##
+      extraEnvVars: []
+      ## @param singleuser.profiles[0].containerPort Single User container port
+      ##
+      containerPort: 8888
+      ## Singleuser resource requests and limits
+      ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+      ## @param singleuser.profiles[0].resources.limits The resources limits for the Singleuser containers
+      ## @param singleuser.profiles[0].resources.requests The requested resources for the Singleuser containers
+      ##
       resources:
         requests:
           cpu: 100m
@@ -1671,31 +1604,102 @@ singleuser:
         privileged: false
         runAsNonRoot: true
         capabilities:
-          drop:
-            - ALL
-    - name: oauth
-      image: docker.io/captnbp/oauth:4.18.0-r0
-      ports:
-        - containerPort: 9095
-          name: oauth
-          protocol: TCP
-      resources:
-        requests:
-          cpu: 100m
-          memory: 50Mi
-        limits:
-          cpu: 100m
-          memory: 100Mi
-      securityContext:
-        allowPrivilegeEscalation: false
-        runAsUser: 33
-        runAsGroup: 33
-        privileged: false
-        runAsNonRoot: true
-        readOnlyFileSystem: true
-        capabilities:
-          drop:
-            - ALL
+          drop: ["ALL"]
+        seccompProfile:
+          type: "RuntimeDefault"
+      ## singleuser pods' Security Context
+      ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+      ## @param singleuser.profiles[0].podSecurityContext.enabled Enabled Single User pods' Security Context
+      ## @param singleuser.profiles[0].podSecurityContext.fsGroup Set Single User pod's Security Context fsGroup
+      ##
+      podSecurityContext:
+        enabled: true
+        fsGroup: 1000
+      ## @param singleuser.profiles[0].podLabels Extra labels for Single User pods
+      ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+      ##
+      podLabels: {}
+      ## @param singleuser.profiles[0].podAnnotations Annotations for Single User pods
+      ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+      ##
+      podAnnotations: {}
+      ## @param singleuser.profiles[0].nodeSelector Node labels for pod assignment. Evaluated as a template.
+      ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+      ##
+      nodeSelector: {}
+      ## @param singleuser.profiles[0].tolerations Tolerations for pod assignment. Evaluated as a template.
+      ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+      ##
+      tolerations: []
+      ## @param singleuser.profiles[0].priorityClassName Single User pod priority class name
+      ## ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+      ##
+      priorityClassName: ""
+      ## @param singleuser.profiles[0].lifecycleHooks Add lifecycle hooks to the Single User deployment to automate configuration before or after startup
+      ##
+      lifecycleHooks: {}
+      ## @param singleuser.profiles[0].extraVolumes Optionally specify extra list of additional volumes for Single User pods
+      ##
+      extraVolumes: []
+      ## @param singleuser.profiles[0].extraVolumeMounts Optionally specify extra list of additional volumeMounts for Single User container(s)
+      ##
+      extraVolumeMounts: []
+      ## @param singleuser.profiles[0].initContainers Add additional init containers to the Single User pod
+      ## Example:
+      ## initContainers:
+      ##   - name: your-image-name
+      ##     image: your-image
+      ##     imagePullPolicy: Always
+      ##     ports:
+      ##       - name: portname
+      ##         containerPort: 1234
+      ##
+      initContainers: []
+      ## @skip singleuser.profiles[0].sidecars [object] Add additional sidecar containers to the Single User pod
+      ## @skip singleuser.profiles[0].sidecars[0]
+      ## @skip singleuser.profiles[0].sidecars[1]
+      sidecars:
+        - name: nginx
+          image: docker.io/captnbp/nginx:4.19.0-r0
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 101
+            runAsGroup: 101
+            privileged: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+        - name: oauth
+          image: docker.io/captnbp/oauth:4.19.0-r0
+          ports:
+            - containerPort: 9095
+              name: oauth
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 33
+            runAsGroup: 33
+            privileged: false
+            runAsNonRoot: true
+            readOnlyFileSystem: true
+            capabilities:
+              drop:
+                - ALL
 
   ## @section Single User RBAC parameters
 
