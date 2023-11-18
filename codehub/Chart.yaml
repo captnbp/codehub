@@ -4,7 +4,7 @@ annotations:
     - name: code-server
       image: docker.io/captnbp/code-server:4.19.0-r0
     - name: jupyterhub
-      image: docker.io/bitnami/jupyterhub:4.0.2-debian-11-r58
+      image: docker.io/bitnami/jupyterhub:4.0.2-debian-11-r63
     - name: oauth
       image: docker.io/captnbp/oauth:4.19.0-r0
     - name: nginx
@@ -42,4 +42,4 @@ sources:
   - https://github.com/bitnami/containers/tree/main/bitnami/jupyterhub
   - https://github.com/jupyterhub/jupyterhub
   - https://github.com/coder/code-server
-version: 5.0.0
+version: 5.0.1
