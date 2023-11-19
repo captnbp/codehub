@@ -39,6 +39,7 @@ spec:
       - {{ .Values.tls.subject.countries }}
   dnsNames:
     - "{{ printf "%s-proxy-api" $serviceName }}"
+    - "{{ printf "%s-proxy-public" $serviceName }}"
     - "{{ printf "%s-proxy-api.%s.svc.%s" $serviceName $releaseNamespace $clusterDomain }}"
     - "{{ printf "%s-proxy-public.%s.svc.%s" $serviceName $releaseNamespace $clusterDomain }}"
     - "localhost"
