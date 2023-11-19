@@ -1040,6 +1040,8 @@ proxy:
     ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
     ##
     ingressClassName: ""
+    ## @param proxy.ingress.ingressControllerType ingressControllerType that will be be used to implement the Ingress specific annotations (Ex. nginx or traefik)
+    ingressControllerType: "nginx"
     ## @param proxy.ingress.pathType Ingress path type
     ##
     pathType: ImplementationSpecific
@@ -1643,7 +1645,7 @@ tls:
   ## @param tls.algorithm Algorithm of the private key. Allowed values are either RSA,Ed25519 or ECDSA.
   algorithm: RSA
   ## @param tls.size Size is the key bit size of the corresponding private key for this certificate. If algorithm is set to RSA, valid values are 2048, 4096 or 8192, and will default to 2048 if not specified. If algorithm is set to ECDSA, valid values are 256, 384 or 521, and will default to 256 if not specified. If algorithm is set to Ed25519, Size is ignored. No other values are allowed. 
-  size: 2048
+  size: 4096
 
   ## @param tls.existingSecret Existing secret containing the certificates for Codehub
   ##
