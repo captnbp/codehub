@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/component: proxy
   namespace: {{ .Release.Namespace | quote }}
   annotations:
-    {{- if .Values.tls.enabled }}
+    {{- if and (eq .Values.proxy.ingress.ingressControllerType "nginx") .Values.tls.enabled }}
     nginx.ingress.kubernetes.io/backend-protocol: HTTPS
     {{- end }}
     {{- if .Values.proxy.ingress.annotations }}

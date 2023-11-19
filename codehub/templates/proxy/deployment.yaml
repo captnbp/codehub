@@ -153,6 +153,9 @@ spec:
             httpGet:
               path: /_chp_healthz
               port: http
+              {{- if .Values.tls.enabled }}
+              scheme: HTTPS
+              {{- end }}
           {{- end }}
           {{- if .Values.proxy.customLivenessProbe }}
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.proxy.customLivenessProbe "context" $) | nindent 12 }}
@@ -161,6 +164,9 @@ spec:
             httpGet:
               path: /_chp_healthz
               port: http
+              {{- if .Values.tls.enabled }}
+              scheme: HTTPS
+              {{- end }}
           {{- end }}
           {{- if .Values.proxy.customReadinessProbe }}
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.proxy.customReadinessProbe "context" $) | nindent 12 }}
@@ -169,6 +175,9 @@ spec:
             httpGet:
               path: /_chp_healthz
               port: http
+              {{- if .Values.tls.enabled }}
+              scheme: HTTPS
+              {{- end }}
           {{- end }}
           {{- end }}
           volumeMounts:
