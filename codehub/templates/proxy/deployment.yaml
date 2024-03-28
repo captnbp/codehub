@@ -103,7 +103,7 @@ spec:
             {{- if .Values.proxy.image.debug }}
             - --log-level=debug
             {{- end }}
-{{- if .Values.tls.enabled }}
+            {{- if .Values.tls.enabled }}
             - --ssl-key=/server-cert/tls.key
             - --ssl-cert=/server-cert/tls.crt
             - --ssl-protocol=TLSv1_2
