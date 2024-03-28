@@ -15,6 +15,15 @@ global:
   ##
   imagePullSecrets: []
   storageClass: ""
+  ## Compatibility adaptations for Kubernetes platforms
+  ##
+  compatibility:
+    ## Compatibility adaptations for Openshift
+    ##
+    openshift:
+      ## @param global.compatibility.openshift.adaptSecurityContext Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)
+      ##
+      adaptSecurityContext: disabled
 
 ## @section Common parameters
 ##
@@ -54,13 +63,11 @@ diagnosticMode:
   ##
   args:
     - infinity
-
 ## @section Hub deployment parameters
-
 hub:
-  ## @param hub.image.registry Hub image registry
-  ## @param hub.image.repository Hub image repository
-  ## @param hub.image.tag Hub image tag (immutable tags are recommended)
+  ## @param hub.image.registry [default: REGISTRY_NAME] Hub image registry
+  ## @param hub.image.repository [default: REPOSITORY_NAME/jupyterhub] Hub image repository
+  ## @skip hub.image.tag Hub image tag (immutable tags are recommended)
   ## @param hub.image.digest Hub image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
   ## @param hub.image.pullPolicy Hub image pull policy
   ## @param hub.image.pullSecrets Hub image pull secrets
@@ -72,7 +79,7 @@ hub:
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
-    ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ## ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
     ##
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
@@ -228,17 +235,28 @@ hub:
   ##
   customReadinessProbe: {}
   ## Hub resource requests and limits
-  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
-  ## @param hub.resources.limits The resources limits for the Hub containers
-  ## @param hub.resources.requests The requested resources for the Hub containers
+  ## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+  ## @param hub.resourcesPreset Set container resources according to one common preset (allowed values: none, nano, small, medium, large, xlarge, 2xlarge). This is ignored if hub.resources is set (hub.resources is recommended for production).
+  ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
   ##
-  resources:
-    limits: {}
-    requests: {}
+  resourcesPreset: "none"
+  ## @param hub.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
+  ## Example:
+  ## resources:
+  ##   requests:
+  ##     cpu: 2
+  ##     memory: 512Mi
+  ##   limits:
+  ##     cpu: 3
+  ##     memory: 1024Mi
+  ##
+  resources: {}
   ## hub containers' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param hub.containerSecurityContext.enabled Enabled containers' Security Context
+  ## @param hub.containerSecurityContext.seLinuxOptions [object,nullable] Set SELinux options in container
   ## @param hub.containerSecurityContext.runAsUser Set containers' Security Context runAsUser
+  ## @param hub.containerSecurityContext.runAsGroup Set containers' Security Context runAsGroup
   ## @param hub.containerSecurityContext.runAsNonRoot Set container's Security Context runAsNonRoot
   ## @param hub.containerSecurityContext.privileged Set container's Security Context privileged
   ## @param hub.containerSecurityContext.readOnlyRootFilesystem Set container's Security Context readOnlyRootFilesystem
@@ -248,7 +266,9 @@ hub:
   ##
   containerSecurityContext:
     enabled: true
+    seLinuxOptions: null
     runAsUser: 1001
+    runAsGroup: 0
     runAsNonRoot: true
     privileged: false
     readOnlyRootFilesystem: false
@@ -260,14 +280,23 @@ hub:
   ## hub pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param hub.podSecurityContext.enabled Enabled Hub pods' Security Context
+  ## @param hub.podSecurityContext.fsGroupChangePolicy Set filesystem group change policy
+  ## @param hub.podSecurityContext.sysctls Set kernel settings using the sysctl interface
+  ## @param hub.podSecurityContext.supplementalGroups Set filesystem extra groups
   ## @param hub.podSecurityContext.fsGroup Set Hub pod's Security Context fsGroup
   ##
   podSecurityContext:
     enabled: true
+    fsGroupChangePolicy: Always
+    sysctls: []
+    supplementalGroups: []
     fsGroup: 1001
   ## @param hub.lifecycleHooks LifecycleHooks for the Hub container to automate configuration before or after startup
   ##
   lifecycleHooks: {}
+  ## @param hub.automountServiceAccountToken Mount Service Account token in pod
+  ##
+  automountServiceAccountToken: true
   ## @param hub.hostAliases Add deployment host aliases
   ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
   ##
@@ -314,7 +343,7 @@ hub:
   ##
   affinity: {}
   ## @param hub.nodeSelector Node labels for pod assignment.
-  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
   ##
   nodeSelector: {}
   ## @param hub.tolerations Tolerations for pod assignment.
@@ -382,7 +411,6 @@ hub:
     create: false
     minAvailable: ""
     maxUnavailable: ""
-
   ## @section Hub RBAC parameters
 
   ## ServiceAccount parameters
@@ -420,7 +448,6 @@ hub:
     ##       - list
     ##
     rules: []
-
   ## @section Hub Traffic Exposure Parameters
 
   ## Network policy
@@ -491,6 +518,14 @@ hub:
     ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
     ##
     externalTrafficPolicy: Cluster
+    ## @param hub.service.ipFamilyPolicy You can create Services which can use IPv4, IPv6, or both. (SingleStack, PreferDualStack, RequireDualStack)
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services
+    ##
+    ipFamilyPolicy: ""
+    ## @param hub.service.ipFamilies Which IP family to use for single stack or define the order of IP families for dual-stack,
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services
+    ##
+    ipFamilies: []
     ## @param hub.service.annotations Additional custom annotations for Hub service
     ##
     annotations: {}
@@ -549,9 +584,9 @@ hub:
 ## @section Proxy deployment parameters
 
 proxy:
-  ## @param proxy.image.registry Proxy image registry
-  ## @param proxy.image.repository Proxy image repository
-  ## @param proxy.image.tag Proxy image tag (immutable tags are recommended)
+  ## @param proxy.image.registry [default: REGISTRY_NAME] Proxy image registry
+  ## @param proxy.image.repository [default: REPOSITORY_NAME/configurable-http-proxy] Proxy image repository
+  ## @skip proxy.image.tag Proxy image tag (immutable tags are recommended)
   ## @param proxy.image.digest Proxy image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
   ## @param proxy.image.pullPolicy Proxy image pull policy
   ## @param proxy.image.pullSecrets Proxy image pull secrets
@@ -560,11 +595,11 @@ proxy:
   image:
     registry: docker.io
     repository: bitnami/configurable-http-proxy
-    tag: 4.6.0-debian-11-r17
+    tag: 4.6.1-debian-12-r11
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
-    ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ## ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
     ##
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
@@ -663,17 +698,28 @@ proxy:
   ##
   customReadinessProbe: {}
   ## Proxy resource requests and limits
-  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
-  ## @param proxy.resources.limits The resources limits for the Proxy containers
-  ## @param proxy.resources.requests The requested resources for the Proxy containers
+  ## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+  ## @param proxy.resourcesPreset Set container resources according to one common preset (allowed values: none, nano, small, medium, large, xlarge, 2xlarge). This is ignored if proxy.resources is set (proxy.resources is recommended for production).
+  ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
   ##
-  resources:
-    limits: {}
-    requests: {}
+  resourcesPreset: "none"
+  ## @param proxy.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
+  ## Example:
+  ## resources:
+  ##   requests:
+  ##     cpu: 2
+  ##     memory: 512Mi
+  ##   limits:
+  ##     cpu: 3
+  ##     memory: 1024Mi
+  ##
+  resources: {}
   ## Proxy containers' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param proxy.containerSecurityContext.enabled Enabled containers' Security Context
+  ## @param proxy.containerSecurityContext.seLinuxOptions [object,nullable] Set SELinux options in container
   ## @param proxy.containerSecurityContext.runAsUser Set containers' Security Context runAsUser
+  ## @param proxy.containerSecurityContext.runAsGroup Set containers' Security Context runAsGroup
   ## @param proxy.containerSecurityContext.runAsNonRoot Set container's Security Context runAsNonRoot
   ## @param proxy.containerSecurityContext.privileged Set container's Security Context privileged
   ## @param proxy.containerSecurityContext.readOnlyRootFilesystem Set container's Security Context readOnlyRootFilesystem
@@ -683,7 +729,9 @@ proxy:
   ##
   containerSecurityContext:
     enabled: true
+    seLinuxOptions: null
     runAsUser: 1001
+    runAsGroup: 0
     runAsNonRoot: true
     privileged: false
     readOnlyRootFilesystem: false
@@ -695,16 +743,25 @@ proxy:
   ## Proxy pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param proxy.podSecurityContext.enabled Enabled Proxy pods' Security Context
+  ## @param proxy.podSecurityContext.fsGroupChangePolicy Set filesystem group change policy
+  ## @param proxy.podSecurityContext.sysctls Set kernel settings using the sysctl interface
+  ## @param proxy.podSecurityContext.supplementalGroups Set filesystem extra groups
   ## @param proxy.podSecurityContext.fsGroup Set Proxy pod's Security Context fsGroup
   ##
   podSecurityContext:
     enabled: true
+    fsGroupChangePolicy: Always
+    sysctls: []
+    supplementalGroups: []
     fsGroup: 1001
   ## @param proxy.lifecycleHooks Add lifecycle hooks to the Proxy deployment
   ##
   lifecycleHooks: {}
   ## Deployment pod host aliases
   ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ## @param proxy.automountServiceAccountToken Mount Service Account token in pod
+  ##
+  automountServiceAccountToken: false
   ## @param proxy.hostAliases Add deployment host aliases
   ##
   hostAliases: []
@@ -748,7 +805,7 @@ proxy:
   ##
   affinity: {}
   ## @param proxy.nodeSelector Node labels for pod assignment. Evaluated as a template.
-  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
   ##
   nodeSelector: {}
   ## @param proxy.tolerations Tolerations for pod assignment. Evaluated as a template.
@@ -846,7 +903,6 @@ proxy:
     ##
     annotations: {}
 
-
   ## @section Proxy Traffic Exposure Parameters
   ##
 
@@ -919,6 +975,14 @@ proxy:
       ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
       ##
       externalTrafficPolicy: Cluster
+      ## @param proxy.service.api.ipFamilyPolicy You can create Services which can use IPv4, IPv6, or both. (SingleStack, PreferDualStack, RequireDualStack)
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services
+      ##
+      ipFamilyPolicy: ""
+      ## @param proxy.service.api.ipFamilies Which IP family to use for single stack or define the order of IP families for dual-stack,
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services
+      ##
+      ipFamilies: []
       ## @param proxy.service.api.annotations Additional custom annotations for Hub service
       ##
       annotations: {}
@@ -969,6 +1033,14 @@ proxy:
       ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
       ##
       externalTrafficPolicy: Cluster
+      ## @param proxy.service.metrics.ipFamilyPolicy You can create Services which can use IPv4, IPv6, or both. (SingleStack, PreferDualStack, RequireDualStack)
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services
+      ##
+      ipFamilyPolicy: ""
+      ## @param proxy.service.metrics.ipFamilies Which IP family to use for single stack or define the order of IP families for dual-stack,
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services
+      ##
+      ipFamilies: []
       ## @param proxy.service.metrics.annotations Additional custom annotations for Hub service
       ##
       annotations: {}
@@ -1020,6 +1092,14 @@ proxy:
       ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
       ##
       externalTrafficPolicy: Cluster
+      ## @param proxy.service.public.ipFamilyPolicy You can create Services which can use IPv4, IPv6, or both. (SingleStack, PreferDualStack, RequireDualStack)
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services
+      ##
+      ipFamilyPolicy: ""
+      ## @param proxy.service.public.ipFamilies Which IP family to use for single stack or define the order of IP families for dual-stack,
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services
+      ##
+      ipFamilies: []
       ## @param proxy.service.public.annotations Additional custom annotations for Hub service
       ##
       annotations: {}
@@ -1212,17 +1292,28 @@ imagePuller:
   ##
   customReadinessProbe: {}
   ## ImagePuller resource requests and limits
-  ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
-  ## @param imagePuller.resources.limits The resources limits for the ImagePuller containers
-  ## @param imagePuller.resources.requests The requested resources for the ImagePuller containers
+  ## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+  ## @param imagePuller.resourcesPreset Set container resources according to one common preset (allowed values: none, nano, small, medium, large, xlarge, 2xlarge). This is ignored if imagePuller.resources is set (imagePuller.resources is recommended for production).
+  ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
   ##
-  resources:
-    limits: {}
-    requests: {}
+  resourcesPreset: "none"
+  ## @param imagePuller.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
+  ## Example:
+  ## resources:
+  ##   requests:
+  ##     cpu: 2
+  ##     memory: 512Mi
+  ##   limits:
+  ##     cpu: 3
+  ##     memory: 1024Mi
+  ##
+  resources: {}
   ## ImagePuller containers' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param imagePuller.containerSecurityContext.enabled Enabled containers' Security Context
+  ## @param imagePuller.containerSecurityContext.seLinuxOptions [object,nullable] Set SELinux options in container
   ## @param imagePuller.containerSecurityContext.runAsUser Set containers' Security Context runAsUser
+  ## @param imagePuller.containerSecurityContext.runAsGroup Set containers' Security Context runAsGroup
   ## @param imagePuller.containerSecurityContext.runAsNonRoot Set container's Security Context runAsNonRoot
   ## @param imagePuller.containerSecurityContext.privileged Set container's Security Context privileged
   ## @param imagePuller.containerSecurityContext.readOnlyRootFilesystem Set container's Security Context readOnlyRootFilesystem
@@ -1232,7 +1323,9 @@ imagePuller:
   ##
   containerSecurityContext:
     enabled: true
+    seLinuxOptions: null
     runAsUser: 1001
+    runAsGroup: 0
     runAsNonRoot: true
     privileged: false
     readOnlyRootFilesystem: false
@@ -1244,10 +1337,16 @@ imagePuller:
   ## ImagePuller pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param imagePuller.podSecurityContext.enabled Enabled ImagePuller pods' Security Context
+  ## @param imagePuller.podSecurityContext.fsGroupChangePolicy Set filesystem group change policy
+  ## @param imagePuller.podSecurityContext.sysctls Set kernel settings using the sysctl interface
+  ## @param imagePuller.podSecurityContext.supplementalGroups Set filesystem extra groups
   ## @param imagePuller.podSecurityContext.fsGroup Set ImagePuller pod's Security Context fsGroup
   ##
   podSecurityContext:
     enabled: true
+    fsGroupChangePolicy: Always
+    sysctls: []
+    supplementalGroups: []
     fsGroup: 1001
   ## @param imagePuller.lifecycleHooks Add lifecycle hooks to the ImagePuller deployment
   ##
@@ -1295,7 +1394,7 @@ imagePuller:
   ##
   affinity: {}
   ## @param imagePuller.nodeSelector Node labels for pod assignment. Evaluated as a template.
-  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
   ##
   nodeSelector: {}
   ## @param imagePuller.tolerations Tolerations for pod assignment. Evaluated as a template.
@@ -1355,6 +1454,23 @@ imagePuller:
   ##         containerPort: 1234
   ##
   sidecars: []
+  ## ServiceAccount parameters
+  ##
+  serviceAccount:
+    ## @param imagePuller.serviceAccount.create Specifies whether a ServiceAccount should be created
+    ##
+    create: true
+    ## @param imagePuller.serviceAccount.name Override image puller service account name
+    ## If not set and create is true, a name is generated using the fullname template
+    ##
+    name: ""
+    ## @param imagePuller.serviceAccount.automountServiceAccountToken Allows auto mount of ServiceAccountToken on the serviceAccount created
+    ## Can be set to false if pods using this serviceAccount do not need to use K8s API
+    ##
+    automountServiceAccountToken: false
+    ## @param imagePuller.serviceAccount.annotations Additional custom annotations for the ServiceAccount
+    ##
+    annotations: {}
 
 ## @section Singleuser deployment parameters
 ##
@@ -1362,15 +1478,16 @@ imagePuller:
 ## Singleuser deployment parameters
 ## NOTE: The values in this section are used for generating the hub.configuration value. In case you provide
 ## a custom hub.configuration or a configmap, these will be ignored.
-## @param singleuser.profiles[0].image.registry Single User image registry
-## @param singleuser.profiles[0].image.repository Single User image repository
-## @param singleuser.profiles[0].image.tag Single User image tag (immutabe tags are recommended)
-## @param singleuser.profiles[0].image.digest Single User image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
-## @param singleuser.profiles[0].image.pullPolicy Single User image pull policy
-## @param singleuser.profiles[0].image.pullSecrets Single User image pull secrets
+## @skip singleuser.profiles
 ##
 singleuser:
   profiles:
+    ## @param singleuser.profiles[0].image.registry Single User image registry
+    ## @param singleuser.profiles[0].image.repository Single User image repository
+    ## @param singleuser.profiles[0].image.tag Single User image tag (immutabe tags are recommended)
+    ## @param singleuser.profiles[0].image.digest Single User image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
+    ## @param singleuser.profiles[0].image.pullPolicy Single User image pull policy
+    ## @param singleuser.profiles[0].image.pullSecrets Single User image pull secrets
     ## @param singleuser.profiles[0].name Single User name
     - name: "Code-Server"
       ## @param singleuser.profiles[0].description Single User description
@@ -1378,7 +1495,7 @@ singleuser:
       image:
         registry: docker.io
         repository: captnbp/code-server
-        tag: 4.19.0-r0
+        tag: 4.21.2-r0
         digest: ""
         ## Specify a imagePullPolicy
         ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1438,6 +1555,7 @@ singleuser:
       ## @param singleuser.profiles[0].containerSecurityContext.enabled Enabled containers' Security Context
       ## @param singleuser.profiles[0].containerSecurityContext.runAsUser Set containers' Security Context runAsUser
       ## @param singleuser.profiles[0].containerSecurityContext.runAsNonRoot Set container's Security Context runAsNonRoot
+      ## @param singleuser.profiles[0].containerSecurityContext.seLinuxOptions [object,nullable] Set SELinux options in container
       ## @param singleuser.profiles[0].containerSecurityContext.privileged Set container's Security Context privileged
       ## @param singleuser.profiles[0].containerSecurityContext.readOnlyRootFilesystem Set container's Security Context readOnlyRootFilesystem
       ## @param singleuser.profiles[0].containerSecurityContext.allowPrivilegeEscalation Set container's Security Context allowPrivilegeEscalation
@@ -1446,8 +1564,12 @@ singleuser:
       ##
       containerSecurityContext:
         enabled: true
+        seLinuxOptions: null
         runAsUser: 1000
         runAsNonRoot: true
+        privileged: false
+        readOnlyRootFilesystem: false
+        allowPrivilegeEscalation: false
         capabilities:
           drop: ["ALL"]
         seccompProfile:
@@ -1505,7 +1627,7 @@ singleuser:
       ## @skip singleuser.profiles[0].sidecars[1]
       sidecars:
         - name: nginx
-          image: docker.io/captnbp/nginx:4.19.0-r0
+          image: docker.io/captnbp/nginx:4.21.2-r0
           resources:
             requests:
               cpu: 100m
@@ -1515,6 +1637,7 @@ singleuser:
               memory: 100Mi
           securityContext:
             allowPrivilegeEscalation: false
+            seLinuxOptions: null
             runAsUser: 101
             runAsGroup: 101
             privileged: false
@@ -1522,8 +1645,10 @@ singleuser:
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: "RuntimeDefault"
         - name: oauth
-          image: docker.io/captnbp/oauth:4.19.0-r0
+          image: docker.io/captnbp/oauth:4.21.2-r0
           ports:
             - containerPort: 9095
               name: oauth
@@ -1537,6 +1662,7 @@ singleuser:
               memory: 100Mi
           securityContext:
             allowPrivilegeEscalation: false
+            seLinuxOptions: null
             runAsUser: 33
             runAsGroup: 33
             privileged: false
@@ -1545,6 +1671,8 @@ singleuser:
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: "RuntimeDefault"
 
   ## @section Single User RBAC parameters
 
@@ -1559,15 +1687,14 @@ singleuser:
     ## @param singleuser.serviceAccount.automountServiceAccountToken Allows auto mount of ServiceAccountToken on the serviceAccount created
     ## Can be set to false if pods using this serviceAccount do not need to use K8s API
     ##
-    automountServiceAccountToken: true
+    automountServiceAccountToken: false
     ## @param singleuser.serviceAccount.annotations Additional custom annotations for the ServiceAccount
     ##
     annotations: {}
 
   ## @section Single User Persistence parameters
   ## Enable persistence using Persistent Volume Claims
-  ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
-
+  ## ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
   persistence:
     ## @param singleuser.persistence.enabled Enable persistent volume creation on Single User instances
     ## If true, use a Persistent Volume Claim, If false, use emptyDir
@@ -1608,30 +1735,6 @@ singleuser:
     ##
     extraEgress: ""
 
-## @section Auxiliary image parameters
-##
-
-## @param auxiliaryImage.registry Auxiliary image registry
-## @param auxiliaryImage.repository Auxiliary image repository
-## @param auxiliaryImage.tag Auxiliary image tag (immutabe tags are recommended)
-## @param auxiliaryImage.digest Auxiliary image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
-## @param auxiliaryImage.pullPolicy Auxiliary image pull policy
-## @param auxiliaryImage.pullSecrets Auxiliary image pull secrets
-##
-auxiliaryImage:
-  registry: docker.io
-  repository: bitnami/os-shell
-  tag: 11-debian-11-r90
-  digest: ""
-  pullPolicy: IfNotPresent
-  ## Optionally specify an array of imagePullSecrets.
-  ## Secrets must be manually created in the namespace.
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-  ## e.g:
-  ## pullSecrets:
-  ##   - myRegistryKeySecretName
-  ##
-  pullSecrets: []
 
 ## @section Global TLS settings for internal CA
 ##
@@ -1671,6 +1774,30 @@ tls:
     group: "cert-manager.io"
 
 
+## @section Auxiliary image parameters
+##
+
+## @param auxiliaryImage.registry [default: REGISTRY_NAME] Auxiliary image registry
+## @param auxiliaryImage.repository [default: REPOSITORY_NAME/os-shell] Auxiliary image repository
+## @skip auxiliaryImage.tag Auxiliary image tag (immutabe tags are recommended)
+## @param auxiliaryImage.digest Auxiliary image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
+## @param auxiliaryImage.pullPolicy Auxiliary image pull policy
+## @param auxiliaryImage.pullSecrets Auxiliary image pull secrets
+##
+auxiliaryImage:
+  registry: docker.io
+  repository: bitnami/os-shell
+  tag: 12-debian-12-r16
+  digest: ""
+  pullPolicy: IfNotPresent
+  ## Optionally specify an array of imagePullSecrets.
+  ## Secrets must be manually created in the namespace.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ## e.g:
+  ## pullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  pullSecrets: []
 ## @section JupyterHub database parameters
 
 ## PostgreSQL chart configuration

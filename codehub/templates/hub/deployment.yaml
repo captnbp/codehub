@@ -3,11 +3,8 @@ kind: Deployment
 metadata:
   name: {{ include "codehub.hub.name" . }}
   namespace: {{ .Release.Namespace | quote }}
-  labels: {{- include "common.labels.standard" . | nindent 4 }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: hub
-    {{- if .Values.commonLabels }}
-    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
-    {{- end }}
   {{- if .Values.commonAnnotations }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
@@ -15,8 +12,9 @@ spec:
   {{- if .Values.hub.updateStrategy }}
   strategy: {{- toYaml .Values.hub.updateStrategy | nindent 4 }}
   {{- end }}
+  {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.hub.podLabels .Values.commonLabels ) "context" . ) }}
   selector:
-    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
       app.kubernetes.io/component: hub
   template:
     metadata:
@@ -24,24 +22,21 @@ spec:
         {{- if .Values.hub.podAnnotations }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.hub.podAnnotations "context" $ ) | nindent 8 }}
         {{- end }}
-        checksum/hub-values: {{ include (print $.Template.BasePath "/hub/configmap-values.yaml") . | sha256sum }}
         {{- if empty .Values.hub.existingConfigmap }}
         checksum/hub-config: {{ include (print $.Template.BasePath "/hub/configmap.yaml") . | sha256sum }}
         {{- end }}
         {{- if empty .Values.hub.existingSecret }}
         checksum/hub-secret: {{ include (print $.Template.BasePath "/hub/secret.yaml") . | sha256sum }}
         {{- end }}
-      labels: {{- include "common.labels.standard" . | nindent 8 }}
+      labels: {{- include "common.labels.standard" ( dict "customLabels" $podLabels "context" $ ) | nindent 8 }}
         app.kubernetes.io/component: hub
         hub.jupyter.org/network-access-proxy-api: "true"
         hub.jupyter.org/network-access-proxy-http: "true"
         hub.jupyter.org/network-access-singleuser: "true"
-        {{- if .Values.hub.podLabels }}
-        {{- include "common.tplvalues.render" (dict "value" .Values.hub.podLabels "context" $) | nindent 8 }}
-        {{- end }}
     spec:
       serviceAccountName: {{ template "codehub.hubServiceAccountName" . }}
       {{- include "codehub.imagePullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: {{ .Values.hub.automountServiceAccountToken }}
       {{- if .Values.hub.hostAliases }}
       hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.hub.hostAliases "context" $) | nindent 8 }}
       {{- end }}
@@ -49,8 +44,8 @@ spec:
       affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.hub.affinity "context" $) | nindent 8 }}
       {{- else }}
       affinity:
-        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.hub.podAffinityPreset "component" "hub" "context" $) | nindent 10 }}
-        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.hub.podAntiAffinityPreset "component" "hub" "context" $) | nindent 10 }}
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.hub.podAffinityPreset "component" "hub" "customLabels" $podLabels "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.hub.podAntiAffinityPreset "component" "hub" "customLabels" $podLabels "context" $) | nindent 10 }}
         nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.hub.nodeAffinityPreset.type "key" .Values.hub.nodeAffinityPreset.key "values" .Values.hub.nodeAffinityPreset.values) | nindent 10 }}
       {{- end }}
       {{- if .Values.hub.nodeSelector }}
@@ -69,7 +64,7 @@ spec:
       schedulerName: {{ .Values.hub.schedulerName }}
       {{- end }}
       {{- if .Values.hub.podSecurityContext.enabled }}
-      securityContext: {{- omit .Values.hub.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.hub.podSecurityContext "context" $) | nindent 8 }}
       {{- end }}
       {{- if .Values.hub.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ .Values.hub.terminationGracePeriodSeconds }}
@@ -109,13 +104,13 @@ spec:
                   info "Connected to the PostgreSQL instance"
               fi
           {{- if .Values.hub.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.hub.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.hub.containerSecurityContext "context" $) | nindent 12 }}
           {{- end }}
           env:
             - name: POSTGRESQL_CLIENT_DATABASE_HOST
               value: {{ ternary (include "codehub.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled }}
             - name: POSTGRESQL_CLIENT_DATABASE_NAME
-              value: {{ ternary .Values.postgresql.auth.database .Values.externalDatabase.port .Values.postgresql.enabled }}
+              value: {{ ternary .Values.postgresql.auth.database .Values.externalDatabase.database .Values.postgresql.enabled }}
             - name: POSTGRESQL_CLIENT_DATABASE_PORT_NUMBER
               value: {{ ternary "5432" .Values.externalDatabase.port .Values.postgresql.enabled | quote }}
             - name: POSTGRESQL_CLIENT_CREATE_DATABASE_PASSWORD
@@ -124,7 +119,7 @@ spec:
                   name: {{ include "codehub.databaseSecretName" . }}
                   key: {{ include "codehub.databaseSecretKey" . }}
             - name: POSTGRESQL_CLIENT_POSTGRES_USER
-              value: {{ ternary .Values.postgresql.auth.username .Values.externalDatabase.host .Values.postgresql.enabled | quote }}
+              value: {{ ternary .Values.postgresql.auth.username .Values.externalDatabase.user .Values.postgresql.enabled | quote }}
         {{- end }}
         {{- if .Values.hub.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.hub.initContainers "context" $) | nindent 8 }}
@@ -137,7 +132,7 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.hub.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           {{- if .Values.hub.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.hub.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.hub.containerSecurityContext "context" $) | nindent 12 }}
           {{- end }}
           {{- if .Values.diagnosticMode.enabled }}
           command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 12 }}
@@ -200,6 +195,8 @@ spec:
             {{- end }}
           {{- if .Values.hub.resources }}
           resources: {{- toYaml .Values.hub.resources | nindent 12 }}
+          {{- else if ne .Values.hub.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.hub.resourcesPreset) | nindent 12 }}
           {{- end }}
           {{- if not .Values.diagnosticMode.enabled }}
           {{- if .Values.hub.customStartupProbe }}
@@ -242,9 +239,9 @@ spec:
             - mountPath: /cert/
               name: server-cert
             {{- end }}
-          {{- if .Values.hub.extraVolumeMounts }}
-          {{- include "common.tplvalues.render" (dict "value" .Values.hub.extraVolumeMounts "context" $) | nindent 12 }}
-          {{- end }}
+            {{- if .Values.hub.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.hub.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
         {{- if .Values.hub.sidecars }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.hub.sidecars "context" $) | nindent 8 }}
         {{- end }}
@@ -258,7 +255,7 @@ spec:
         - name: secret
           secret:
             secretName: {{ include "codehub.hubSecretName" . }}
-        {{- if .Values.tls.enabled }}
+{{- if .Values.tls.enabled }}
         - name: server-cert
           secret:
             secretName: {{ include "common.names.fullname" . }}-hub-crt
