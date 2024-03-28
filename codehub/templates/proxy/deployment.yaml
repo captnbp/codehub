@@ -152,7 +152,7 @@ spec:
             httpGet:
               path: /_chp_healthz
               port: http
-{{- if .Values.tls.enabled }}
+              {{- if .Values.tls.enabled }}
               scheme: HTTPS
               {{- end }}
           {{- end }}
@@ -163,7 +163,7 @@ spec:
             httpGet:
               path: /_chp_healthz
               port: http
-{{- if .Values.tls.enabled }}
+              {{- if .Values.tls.enabled }}
               scheme: HTTPS
               {{- end }}
           {{- end }}
@@ -174,7 +174,7 @@ spec:
             httpGet:
               path: /_chp_healthz
               port: http
-{{- if .Values.tls.enabled }}
+              {{- if .Values.tls.enabled }}
               scheme: HTTPS
               {{- end }}
           {{- end }}
