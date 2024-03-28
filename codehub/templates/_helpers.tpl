@@ -1,3 +1,8 @@
+{{/*
+Copyright VMware, Inc.
+SPDX-License-Identifier: APACHE-2.0
+*/}}
+
 {{- /*
     Returns given number of random Hex characters.
 
@@ -86,6 +91,27 @@ Return the CryptKeeper value
 {{- end }}
 
 {{/*
+Return the API token for a hub service
+Usage:
+{{ include "codehub.hub.services.get_api_token" ( dict "serviceKey" "my-service" "context" $) }}
+*/}}
+{{- define "codehub.hub.services.get_api_token" -}}
+    {{- $services := .context.Values.hub.services }}
+    {{- $explicitly_set_api_token := or (dig .serviceKey "api_token" "" $services) (dig .serviceKey "apiToken" "" $services) }}
+    {{- if $explicitly_set_api_token }}
+        {{- $explicitly_set_api_token }}
+    {{- else }}
+        {{- $k8s_state := lookup "v1" "Secret" .context.Release.Namespace (include "codehub.hub.name" .context) | default (dict "data" (dict)) }}
+        {{- $k8s_secret_key := printf "hub.services.%s.apiToken" .serviceKey }}
+        {{- if hasKey $k8s_state.data $k8s_secret_key }}
+            {{- index $k8s_state.data $k8s_secret_key | b64dec }}
+        {{- else }}
+            {{- include "codehub.randHex" 64 }}
+        {{- end }}
+    {{- end }}
+{{- end }}
+
+{{/*
 Return the proper hub image name
 */}}
 {{- define "codehub.proxy.name" -}}
@@ -163,6 +189,17 @@ Return the proper Docker Image Registry Secret Names list
 */}}
 {{- define "codehub.imagePullSecrets.list" -}}
 {{- include "codehub.imagePullSecretsList" (dict "images" (list .Values.hub.image .Values.proxy.image .Values.auxiliaryImage) "global" .Values.global) -}}
+{{- end -}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "codehub.imagePullerServiceAccountName" -}}
+{{- if .Values.hub.serviceAccount.create -}}
+    {{ default (printf "%s-image-puller" (include "common.names.fullname" .)) .Values.imagePuller.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.imagePuller.serviceAccount.name }}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -292,6 +329,24 @@ Get the Postgresql credentials secret.
 {{- else }}
     {{- printf "%s-hub" (include "common.names.fullname" . ) -}}
 {{- end -}}
+{{- end -}}
+
+{{/*
+ We need to replace the Kubernetes memory/cpu terminology (e.g. 10Gi, 10Mi) with one compatible with Python (10G, 10M)
+*/}}
+{{- define "codehub.singleuser.resources" -}}
+{{ $resources := (dict "limits" (dict) "requests" (dict)) }}
+{{- if .Values.singleuser.resources -}}
+    {{ $resources = .Values.singleuser.resources -}}
+{{- else if ne .Values.singleuser.resourcesPreset "none" -}}
+    {{ $resources = include "common.resources.preset" (dict "type" .Values.singleuser.resourcesPreset) -}}
+{{- end -}}
+cpu:
+  limit: {{ regexReplaceAll "([A-Za-z])i" (default "" $resources.limits.cpu)  "${1}" }}
+  guarantee: {{ regexReplaceAll "([A-Za-z])i" (default "" $resources.requests.cpu) "${1}" }}
+memory:
+  limit: {{ regexReplaceAll "([A-Za-z])i" (default "" $resources.limits.memory) "${1}" }}
+  guarantee: {{ regexReplaceAll "([A-Za-z])i" (default "" $resources.requests.memory) "${1}" }}
 {{- end -}}
 
 {{/* Validate values of JupyterHub - Database */}}

@@ -1,0 +1,47 @@
+{{- if .Capabilities.APIVersions.Has "kyverno.io/v1" }}
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: {{ printf "%s-check-images" (include "common.names.fullname" .) }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+  {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  background: false
+  validationFailureAction: Enforce
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail
+  rules:
+    - match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      name: check-image
+      verifyImages:
+        - attestors:
+            - count: 1
+              entries:
+                - keys:
+                    publicKeys: |-
+                      -----BEGIN PUBLIC KEY-----
+                      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1er+5JMY/P0+R8wiW3HSjGUohoMf
+                      GEVe7kEAkv1mARM+NyeR5Cd2PpEZnlmNhb2jvyWczfAyj09oA/H47VCQnA==
+                      -----END PUBLIC KEY-----
+                    signatureAlgorithm: sha256
+          imageReferences:
+            - lab.frogg.it:5050/doca/*
+            - lab.frogg.it:5050/captnbp/*
+            - registry-1.docker.io/captnbp/*
+          mutateDigest: true
+          required: true
+          verifyDigest: true
+{{- end }}
