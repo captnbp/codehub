@@ -13,10 +13,6 @@ metadata:
     traefik.ingress.kubernetes.io/service.serversscheme: https
     traefik.ingress.kubernetes.io/service.serverstransport: "{{ .Release.Namespace }}-{{ include "codehub.proxy.name" . }}@kubernetescrd"
     {{- end }}
-    {{- if and (eq .Values.proxy.ingress.ingressControllerType "traefik") .Values.tls.enabled }}
-    traefik.ingress.kubernetes.io/service.serversscheme: https
-    traefik.ingress.kubernetes.io/service.serverstransport: "{{ .Release.Namespace }}-{{ include "codehub.proxy.name" . }}@kubernetescrd"
-    {{- end }}
 spec:
   type: {{ .Values.proxy.service.public.type }}
   {{- if and .Values.proxy.service.public.clusterIP (eq .Values.proxy.service.public.type "ClusterIP") }}
