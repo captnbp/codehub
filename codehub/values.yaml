@@ -75,7 +75,7 @@ hub:
   image:
     registry: docker.io
     repository: bitnami/jupyterhub
-    tag: 4.0.2-debian-11-r63
+    tag: 4.1.5-debian-12-r8
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -595,7 +595,7 @@ proxy:
   image:
     registry: docker.io
     repository: bitnami/configurable-http-proxy
-    tag: 4.6.1-debian-12-r11
+    tag: 4.6.2-debian-12-r1
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1495,7 +1495,7 @@ singleuser:
       image:
         registry: docker.io
         repository: captnbp/code-server
-        tag: 4.23.0-r0
+        tag: 4.91.0-r0
         digest: ""
         ## Specify a imagePullPolicy
         ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1627,7 +1627,7 @@ singleuser:
       ## @skip singleuser.profiles[0].sidecars[1]
       sidecars:
         - name: nginx
-          image: docker.io/captnbp/nginx:4.21.2-r0
+          image: docker.io/captnbp/nginx:4.91.0-r0
           resources:
             requests:
               cpu: 100m
@@ -1648,7 +1648,7 @@ singleuser:
             seccompProfile:
               type: "RuntimeDefault"
         - name: oauth
-          image: docker.io/captnbp/oauth:4.21.2-r0
+          image: docker.io/captnbp/oauth:4.91.0-r0
           ports:
             - containerPort: 9095
               name: oauth
@@ -1787,7 +1787,7 @@ tls:
 auxiliaryImage:
   registry: docker.io
   repository: bitnami/os-shell
-  tag: 12-debian-12-r16
+  tag: 12-debian-12-r24
   digest: ""
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.

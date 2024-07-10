@@ -38,7 +38,7 @@ MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1er+5JMY/P0+R8wiW3HSjGUohoMf
 GEVe7kEAkv1mARM+NyeR5Cd2PpEZnlmNhb2jvyWczfAyj09oA/H47VCQnA==
 -----END PUBLIC KEY-----
 
-$ cosign verify -key ./cosign.pub docker.io/captnbp/code-server:4.21.2-r0
+$ cosign verify -key ./cosign.pub docker.io/captnbp/code-server:4.91.0-r0
 ```
 
 You can also set the following Kyverno Cluster Policy :
