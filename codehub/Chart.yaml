@@ -15,7 +15,7 @@ annotations:
       image: docker.io/bitnami/os-shell:12-debian-12-r45
   artifacthub.io/license: MIT
 apiVersion: v2
-appVersion: 4.100.2-r0
+appVersion: 4.100.2
 dependencies:
   - condition: postgresql.enabled
     name: postgresql
@@ -42,4 +42,4 @@ sources:
   - https://github.com/bitnami/containers/tree/main/bitnami/jupyterhub
   - https://github.com/jupyterhub/jupyterhub
   - https://github.com/coder/code-server
-version: 6.0.2
+version: 6.1.0
