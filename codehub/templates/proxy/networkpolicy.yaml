@@ -52,7 +52,7 @@ spec:
       to:
         - podSelector:
             matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 14 }}
-              app.kubernetes.io/component: singleuser
+              app.kubernetes.io/component: singleuser-server
     ## DNS access
     - ports:
         - protocol: UDP
