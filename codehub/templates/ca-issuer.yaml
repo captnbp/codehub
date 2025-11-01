@@ -40,7 +40,7 @@ spec:
     {{- end }}
   subject:
     organizationalUnits:
-      - {{ .Values.clusterName }}
+      - {{ .Values.tls.subject.organizationalUnit }}
     organizations:
       - {{ .Values.tls.subject.organizations }}
     countries:
