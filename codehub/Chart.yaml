@@ -27,7 +27,6 @@ dependencies:
       - bitnami-common
     version: 2.x.x
 description: Codehub brings the power of JupyterHub with Code-Server. It gives users access to computational environments and resources without burdening the users with installation and maintenance tasks.
-engine: gotpl
 home: https://jupyter.org/hub
 icon: https://bitnami.com/assets/stacks/jupyterhub/img/jupyterhub-stack-220x234.png
 keywords:
@@ -36,10 +35,10 @@ keywords:
   - vscode
 maintainers:
   - name: captnbp
-    url: https://lab.frogg.it/captnbp/codehub
+    url: https://lab.frogg.it/doca/codehub-helm
 name: codehub
 sources:
   - https://github.com/bitnami/containers/tree/main/bitnami/jupyterhub
   - https://github.com/jupyterhub/jupyterhub
   - https://github.com/coder/code-server
-version: 6.2.0
+version: 6.2.1

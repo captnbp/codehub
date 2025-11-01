@@ -7,16 +7,14 @@ apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
 metadata:
   name: {{ include "codehub.proxy.name" . }}
-  namespace: {{ .Release.Namespace | quote }}
-  {{- $versionLabel := dict "app.kubernetes.io/version" ( include "common.images.version" ( dict "imageRoot" .Values.proxy.image "chart" .Chart ) ) }}
-  {{- $labels := include "common.tplvalues.merge" ( dict "values" ( list .Values.commonLabels $versionLabel ) "context" . ) }}
-  labels: {{- include "common.labels.standard" ( dict "customLabels" $labels "context" $ ) | nindent 4 }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: proxy
   {{- if .Values.commonAnnotations }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
 spec:
-  rootCAsSecrets:
-    - {{ include "common.names.fullname" . }}-proxy-crt
+  rootCAs:
+    - secret: {{ include "common.names.fullname" . }}-proxy-crt
   serverName: {{ printf "%s-proxy-public" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
