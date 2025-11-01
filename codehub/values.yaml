@@ -1756,6 +1756,8 @@ tls:
   ## Base subject details for certificate generation, node_dn filtering, admin_dn 
   ##
   subject:
+    ## @param tls.subject.organizationalUnit Subject's organizational unit
+    organizationalUnit: "doca"
     ## @param tls.subject.organizations Subject's organization
     ##
     organizations: "codehub"
