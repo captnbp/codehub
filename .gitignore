@@ -1,3 +1,4 @@
 config.yaml
 code-*.tgz
 codehub/charts
+artifacthub-repo.yml
