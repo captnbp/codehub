@@ -64,6 +64,9 @@ data:
     # Do not shut down user pods when hub is restarted
     c.JupyterHub.cleanup_servers = False
 
+    # Create one service per user pod
+    c.KubeSpawner.services_enabled = True
+
     # Check that the proxy has routes appropriately setup
     c.JupyterHub.last_activity_interval = 60
 
