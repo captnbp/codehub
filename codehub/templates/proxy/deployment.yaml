@@ -105,6 +105,7 @@ spec:
             {{- if .Values.tls.enabled }}
             - --ssl-key=/server-cert/tls.key
             - --ssl-cert=/server-cert/tls.crt
+            - --ssl-ca=/server-cert/ca.crt
             - --ssl-protocol=TLSv1_2
             {{- end }}
           {{- end }}

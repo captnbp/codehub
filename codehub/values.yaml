@@ -1495,7 +1495,7 @@ singleuser:
       image:
         registry: docker.io
         repository: captnbp/code-server
-        tag: 4.105.1-r0
+        tag: 4.105.1
         digest: ""
         ## Specify a imagePullPolicy
         ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1627,7 +1627,7 @@ singleuser:
       ## @skip singleuser.profiles[0].sidecars[1]
       sidecars:
         - name: nginx
-          image: docker.io/captnbp/nginx:4.105.1-r0
+          image: docker.io/captnbp/nginx:1.29.0
           resources:
             requests:
               cpu: 100m
@@ -1648,7 +1648,7 @@ singleuser:
             seccompProfile:
               type: "RuntimeDefault"
         - name: oauth
-          image: docker.io/captnbp/oauth:4.105.1-r0
+          image: docker.io/captnbp/oauth:1.0.0
           ports:
             - containerPort: 9095
               name: oauth

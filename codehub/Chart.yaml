@@ -2,13 +2,13 @@ annotations:
   category: developpment
   artifacthub.io/images: |
     - name: code-server
-      image: docker.io/captnbp/code-server:4.105.1-r0
+      image: docker.io/captnbp/code-server:4.105.1
     - name: jupyterhub
       image: docker.io/bitnamilegacy/jupyterhub:5.3.0-debian-12-r16
     - name: oauth
-      image: docker.io/captnbp/oauth:4.105.1-r0
+      image: docker.io/captnbp/oauth:1.0.0
     - name: nginx
-      image: docker.io/captnbp/nginx:4.105.1-r0
+      image: docker.io/captnbp/nginx:1.29.0
     - name: configurable-http-proxy
       image: docker.io/bitnamilegacy/configurable-http-proxy:5.0.1-debian-12-r21
     - name: os-shell
@@ -41,4 +41,4 @@ sources:
   - https://github.com/bitnami/containers/tree/main/bitnami/jupyterhub
   - https://github.com/jupyterhub/jupyterhub
   - https://github.com/coder/code-server
-version: 6.2.9
+version: 6.2.10
