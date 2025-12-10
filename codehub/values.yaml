@@ -1495,7 +1495,7 @@ singleuser:
       image:
         registry: docker.io
         repository: captnbp/code-server
-        tag: 4.105.1
+        tag: 4.106.2
         digest: ""
         ## Specify a imagePullPolicy
         ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'

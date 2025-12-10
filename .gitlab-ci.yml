@@ -1,36 +1,8 @@
+---
 include:
   - project: doca/gitlab-ci-lib
-    file: helm/build-publish.yaml
-  - project: doca/gitlab-ci-lib
-    file: helm/sign.yaml
-  - project: doca/gitlab-ci-lib
-    file: helm/test.yaml
-
-workflow:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_COMMIT_TAG
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    ref: main
+    file: /pipelines/helm.yaml
 
 variables:
-  CHART_FOLDER: codehub
-
-stages:
-  - test
-  - release
-  - sign
-
-lint:
-  extends:
-    - .template:helm:lint
-
-publish:
-  extends:
-    - .template:helm:publish:dockerhub
-  needs:
-    - lint
-
-sign:
-  extends: .template:helm:sign:dockerhub
-  needs:
-    - publish
+  CHART_FOLDER: "codehub"
