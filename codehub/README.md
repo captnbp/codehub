@@ -71,6 +71,7 @@ spec:
                       GEVe7kEAkv1mARM+NyeR5Cd2PpEZnlmNhb2jvyWczfAyj09oA/H47VCQnA==
                       -----END PUBLIC KEY-----
                     signatureAlgorithm: sha256
+          type: SigstoreBundle
           imageReferences:
             - lab.frogg.it:5050/doca/*
             - lab.frogg.it:5050/captnbp/*
