@@ -1495,7 +1495,7 @@ singleuser:
       image:
         registry: docker.io
         repository: captnbp/code-server
-        tag: 4.113.0
+        tag: 4.116.0
         digest: ""
         ## Specify a imagePullPolicy
         ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1805,6 +1805,9 @@ auxiliaryImage:
 ## PostgreSQL chart configuration
 ## ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
 ## @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart
+## @param postgresql.image.registry [default: REGISTRY_NAME] PostgreSQL image registry
+## @param postgresql.image.repository [default: REPOSITORY_NAME/postgresql] PostgreSQL image repository
+## @skip postgresql.image.tag PostgreSQL image tag (immutable tags are recommended)
 ## @param postgresql.auth.username Name for a custom user to create
 ## @param postgresql.auth.password Password for the custom user to create
 ## @param postgresql.auth.database Name for a custom database to create
@@ -1814,6 +1817,10 @@ auxiliaryImage:
 ##
 postgresql:
   enabled: true
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/postgresql
+    tag: 17.6.0-debian-12-r4
   auth:
     username: bn_jupyterhub
     password: ""
