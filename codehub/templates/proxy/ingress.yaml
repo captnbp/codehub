@@ -33,9 +33,7 @@ spec:
           {{- toYaml .Values.proxy.ingress.extraPaths | nindent 10 }}
           {{- end }}
           - path: {{ .Values.proxy.ingress.path }}
-            {{- if eq "true" (include "common.ingress.supportsPathType" .) }}
             pathType: {{ .Values.proxy.ingress.pathType }}
-            {{- end }}
             backend: {{- include "common.ingress.backend" (dict "serviceName" (printf "%s-proxy-public" (include "common.names.fullname" . )) "servicePort" "http" "context" $)  | nindent 14 }}
     {{- end }}
     {{- range .Values.proxy.ingress.extraHosts }}
