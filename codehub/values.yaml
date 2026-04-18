@@ -1807,7 +1807,6 @@ auxiliaryImage:
 ## @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart
 ## @param postgresql.image.registry [default: REGISTRY_NAME] PostgreSQL image registry
 ## @param postgresql.image.repository [default: REPOSITORY_NAME/postgresql] PostgreSQL image repository
-## @skip postgresql.image.tag PostgreSQL image tag (immutable tags are recommended)
 ## @param postgresql.auth.username Name for a custom user to create
 ## @param postgresql.auth.password Password for the custom user to create
 ## @param postgresql.auth.database Name for a custom database to create
@@ -1820,7 +1819,6 @@ postgresql:
   image:
     registry: docker.io
     repository: bitnamilegacy/postgresql
-    tag: 17.6.0-debian-12-r4
   auth:
     username: bn_jupyterhub
     password: ""
