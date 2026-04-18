@@ -6,7 +6,7 @@ annotations:
     - name: jupyterhub
       image: docker.io/jupyterhub/jupyterhub:5.4.4
     - name: oauth
-      image: docker.io/captnbp/oauth:1.0.0
+      image: docker.io/captnbp/oauth:1.0.1
     - name: nginx
       image: docker.io/captnbp/nginx:1.29.0
     - name: configurable-http-proxy

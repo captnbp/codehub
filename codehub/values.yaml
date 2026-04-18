@@ -1648,7 +1648,7 @@ singleuser:
             seccompProfile:
               type: "RuntimeDefault"
         - name: oauth
-          image: docker.io/captnbp/oauth:1.0.0
+          image: docker.io/captnbp/oauth:1.0.1
           ports:
             - containerPort: 9095
               name: oauth
