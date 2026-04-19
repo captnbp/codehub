@@ -199,7 +199,6 @@ data:
             image = f"{image}:{tag}"
 
         c.KubeSpawner.image = image
-    )
 
     # Combine imagePullSecret.create (single), imagePullSecrets (list), and
     # singleuser.image.pullSecrets (list).
